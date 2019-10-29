@@ -126,7 +126,10 @@ def create_select(table_name, template, fields, order_by=None, limit=None, offse
 
     w_clause, args = template_to_where_clause(template)
 
-    sql = "select " + field_list + " from " +  table_name + " " + w_clause
+    if w_clause:
+        sql = "select " + field_list + " from " +  table_name + " " + w_clause
+    else:
+        sql = "select " + field_list + " from " +  table_name
 
     return (sql, args)
 

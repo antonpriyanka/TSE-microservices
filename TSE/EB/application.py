@@ -291,6 +291,109 @@ def user_verify(email):
 
     return full_rsp
 
+@application.route("/api/resource/<primary_key>", methods=["GET"])
+def user_resource_primary_key(primary_key):
+
+    global _user_service
+
+    inputs = log_and_extract_input(demo)
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+
+    if 1:#try:
+
+        user_service = _get_user_service()
+
+        logger.error("/email: _user_service = " + str(user_service))
+        print (inputs)
+
+        if inputs["method"] == "GET":
+            if 'f' in inputs['query_params']:
+                fields = inputs['query_params']['f']
+                fields = fields.split(',')
+                inputs['query_params'].pop('f')
+            else:
+                fields = None
+            rsp = user_service.get_resource_by_primary_key(primary_key, fields)
+
+        if rsp is not None:
+            rsp_data = rsp
+            rsp_status = 200
+            rsp_txt = "OK"
+        else:
+            rsp_data = None
+            rsp_status = 404
+            rsp_txt = "NOT FOUND"
+
+        if rsp_data is not None:
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+        else:
+            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    # except Exception as e:
+    #     log_msg = "/email: Exception = " + str(e)
+    #     logger.error(log_msg)
+    #     rsp_status = 500
+    #     rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+    #     full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/email", rsp_status, rsp_data, rsp_txt)
+
+    return full_rsp
+
+@application.route("/api/resource", methods=["GET"])
+def user_resource():
+
+    global _user_service
+
+    inputs = log_and_extract_input(demo)
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+
+    try:
+
+        user_service = _get_user_service()
+
+        logger.error("/email: _user_service = " + str(user_service))
+        print (inputs)
+
+        if inputs["method"] == "GET":
+            if 'f' in inputs['query_params']:
+                fields = inputs['query_params']['f']
+                fields = fields.split(',')
+                inputs['query_params'].pop('f')
+            else:
+                fields = None
+            params = inputs['query_params']
+            rsp = user_service.get_resources(params, fields)
+
+        if rsp is not None:
+            rsp_data = rsp
+            rsp_status = 200
+            rsp_txt = "OK"
+        else:
+            rsp_data = None
+            rsp_status = 404
+            rsp_txt = "NOT FOUND"
+
+        if rsp_data is not None:
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+        else:
+            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    except Exception as e:
+        log_msg = "/email: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/email", rsp_status, rsp_data, rsp_txt)
+
+    return full_rsp
+
 def is_user_authorised(source):
     user_source = jwt.decode(source, 'verify-user-234234', algorithm='HS256')
     user = user_source['source']

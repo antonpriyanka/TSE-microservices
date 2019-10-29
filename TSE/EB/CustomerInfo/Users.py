@@ -48,6 +48,18 @@ class UsersService(BaseService):
         return result
 
     @classmethod
+    def get_resources(cls, params, fields):
+
+        result = UsersRDB.get_by_params_and_fields(params, fields)
+        return result
+
+    @classmethod
+    def get_resource_by_primary_key(cls, primary_key, fields):
+        template = {"id":primary_key}
+        result = UsersRDB.get_by_params_and_fields(template, fields)
+        return result
+
+    @classmethod
     def create_user(cls, user_info):
 
 

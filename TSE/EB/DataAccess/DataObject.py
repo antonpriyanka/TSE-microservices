@@ -43,6 +43,19 @@ class UsersRDB(BaseDataObject):
         return result
 
     @classmethod
+    def get_by_params_and_fields(cls, params=None, fields=None):
+
+        sql, args = data_adaptor.create_select("ebdb.users", params, fields)
+
+        res, data = data_adaptor.run_q(sql=sql, args=args, fetch=True)
+        if data is not None and len(data) > 0:
+            result =  data[0]
+        else:
+            result = None
+
+        return result
+
+    @classmethod
     def create_user(cls, user_info):
 
         result = None
