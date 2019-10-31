@@ -48,6 +48,12 @@ class UsersService(BaseService):
         return result
 
     @classmethod
+    def get_by_creds(cls, creds):
+        
+        result = UsersRDB.get_by_creds(creds)
+        return result
+
+    @classmethod
     def get_resources(cls, params, fields):
 
         result = UsersRDB.get_by_params_and_fields(params, fields)
@@ -62,8 +68,6 @@ class UsersService(BaseService):
     @classmethod
     def create_user(cls, user_info):
 
-
-
         for f in UsersService.required_create_fields:
             v = user_info.get(f, None)
             if v is None:
@@ -75,8 +79,9 @@ class UsersService(BaseService):
                     raise ServiceException(ServiceException.bad_data,
                            "Email looks invalid: " + v)
 
-        id1 = str(uuid.uuid1())
-        user_info['id'] = id1
+        if "id" not in user_info:
+            id1 = str(uuid.uuid1())
+            user_info['id'] = id1
         result = UsersRDB.create_user(user_info=user_info)
 
         if result is not None:

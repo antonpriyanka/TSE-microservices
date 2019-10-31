@@ -6,6 +6,8 @@
 #
 from flask import Flask, Response, request
 
+from flask_cors import CORS
+
 from datetime import datetime
 import json
 import jwt 
@@ -44,6 +46,7 @@ footer_text = '</body>\n</html>'
 # EB looks for an 'application' callable by default.
 # This is the top-level application that receives and routes requests.
 application = Flask(__name__)
+CORS(application)
 
 # add a rule for the index page. (Put here by AWS in the sample)
 application.add_url_rule('/', 'index', (lambda: header_text +
@@ -244,6 +247,51 @@ def user_email(email):
     log_response("/email", rsp_status, rsp_data, rsp_txt)
 
     return full_rsp
+
+@application.route("/api/login", methods=["POST"])
+def user_register():
+    global _user_service
+
+    inputs = log_and_extract_input(demo, { "parameters": None })
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+    print(inputs)
+
+    try:
+
+        user_service = _get_user_service()
+        creds = {
+            "email": inputs['body']['email'],
+            "pw": inputs['body']['password']
+        }
+        rsp = user_service.get_by_creds(creds)
+
+        if rsp is not None:
+            rsp_data = rsp
+            rsp_status = 200
+            rsp_txt = "OK"
+        else:
+            rsp_data = None
+            rsp_status = 404
+            rsp_txt = "User not registered"
+
+        if rsp_data is not None:
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+        else:
+            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    except Exception as e:
+        log_msg = "/email: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/login", rsp_status, rsp_data, rsp_txt)
+
+    return full_rsp
+
 
 @application.route("/api/verifyuser/<email>", methods=["PUT"])
 def user_verify(email):
