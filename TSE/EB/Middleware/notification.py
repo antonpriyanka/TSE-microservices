@@ -3,7 +3,8 @@ import json
 
 
 def publish_it(msg):
-    print("***Edited by Goutham***)
+    print("***Edited by Goutham***")
+
     client = boto3.client('sns')
     txt_msg = json.dumps(msg)
 
