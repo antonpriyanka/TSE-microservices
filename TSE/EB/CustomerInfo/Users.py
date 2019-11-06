@@ -1,9 +1,8 @@
 
-
 from abc import ABC, abstractmethod
 from Context.Context import Context
 from DataAccess.DataObject import UsersRDB as UsersRDB
-import uuid 
+import uuid
 
 import boto3
 
@@ -48,6 +47,13 @@ class UsersService(BaseService):
         return result
 
     @classmethod
+    def get_by_id(cls, id):
+
+        result = UsersRDB.get_by_id(id)
+        return result
+
+
+    @classmethod
     def get_resources(cls, params, fields):
 
         result = UsersRDB.get_by_params_and_fields(params, fields)
@@ -55,7 +61,7 @@ class UsersService(BaseService):
 
     @classmethod
     def get_resource_by_primary_key(cls, primary_key, fields):
-        template = {"id":primary_key}
+        template = {"id" :primary_key}
         result = UsersRDB.get_by_params_and_fields(template, fields)
         return result
 
@@ -96,7 +102,7 @@ class UsersService(BaseService):
 
     @classmethod
     def update_user_status(cls, email, status="PENDING"):
-        data = {'status':status}
+        data = {'status' :status}
         result = UsersRDB.update_user(email, data)
         return result
 
@@ -106,4 +112,7 @@ class UsersService(BaseService):
         return result
 
 
-
+    @classmethod
+    def update_userinfo(cls, user_info, id):
+        res ,data = UsersRDB.update_userinfo(user_info, id)
+        return res ,data

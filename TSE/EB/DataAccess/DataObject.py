@@ -43,6 +43,18 @@ class UsersRDB(BaseDataObject):
         return result
 
     @classmethod
+    def get_by_id(cls, id):
+
+        sql = "select * from ebdb.users where auto_id=%s"
+        res, data = data_adaptor.run_q(sql=sql, args=(id), fetch=True)
+        if data is not None and len(data) > 0:
+            result = data[0]
+        else:
+            result = None
+
+        return result
+
+    @classmethod
     def get_by_params_and_fields(cls, params=None, fields=None):
 
         sql, args = data_adaptor.create_select("ebdb.users", params, fields)
@@ -94,12 +106,18 @@ class UsersRDB(BaseDataObject):
             template = {
                 "email": email
             }
-            sql, args = data_adaptor.create_update("ebdb.users", data, template) 
+            sql, args = data_adaptor.create_update("ebdb.users", data, template)
             data_adaptor.run_q(sql=sql, args=args, fetch=True)
             return "Resource updated successfully"
         except Exception as e:
             print(e)
             return None
+
+    @classmethod
+    def update_userinfo(cls, user_info, id):
+        sql,args = data_adaptor.create_update(table_name='users', new_values=user_info, template={'auto_id': id})
+        res, data = data_adaptor.run_q(sql, args)
+        return res,data
 
 
 

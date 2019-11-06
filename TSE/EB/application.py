@@ -8,7 +8,7 @@ from flask import Flask, Response, request
 
 from datetime import datetime
 import json
-import jwt 
+import jwt
 
 from CustomerInfo.Users import UsersService as UserService
 from Context.Context import Context
@@ -17,9 +17,11 @@ from Context.Context import Context
 # The application should get the log level out of the context. We will change later.
 #
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
+
 
 ###################################################################################################################
 #
@@ -27,8 +29,9 @@ logger.setLevel(logging.DEBUG)
 #
 # AWS puts this function in the default started application
 # print a nice greeting.
-def say_hello(username = "World"):
+def say_hello(username="World"):
     return '<p>Hello %s!</p>\n' % username
+
 
 # AWS put this here.
 # some bits of text for the page.
@@ -47,12 +50,12 @@ application = Flask(__name__)
 
 # add a rule for the index page. (Put here by AWS in the sample)
 application.add_url_rule('/', 'index', (lambda: header_text +
-    say_hello() + instructions + footer_text))
+                                                say_hello() + instructions + footer_text))
 
 # add a rule when the page is accessed with a name appended to the site
 # URL. Put here by AWS in the sample
 application.add_url_rule('/<username>', 'hello', (lambda username:
-    header_text + say_hello(username) + home_link + footer_text))
+                                                  header_text + say_hello(username) + home_link + footer_text))
 
 ##################################################################################################################
 # The stuff I added begins here.
@@ -62,7 +65,6 @@ _user_service = None
 
 
 def _get_default_context():
-
     global _default_context
 
     if _default_context is None:
@@ -79,8 +81,8 @@ def _get_user_service():
 
     return _user_service
 
-def init():
 
+def init():
     global _default_context, _user_service
 
     _default_context = Context.get_default_context()
@@ -94,13 +96,11 @@ def init():
 # 3. Return extracted information.
 #
 def log_and_extract_input(method, path_params=None):
-
     path = request.path
     args = dict(request.args)
     data = None
     headers = dict(request.headers)
     method = request.method
-
 
     try:
         if request.data is not None:
@@ -113,22 +113,22 @@ def log_and_extract_input(method, path_params=None):
 
     log_message = str(datetime.now()) + ": Method " + method
 
-    inputs =  {
+    inputs = {
         "path": path,
         "method": method,
         "path_params": path_params,
         "query_params": args,
         "headers": headers,
         "body": data
-        }
+    }
 
     log_message += " received: \n" + json.dumps(inputs, indent=2)
     logger.debug(log_message)
 
     return inputs
 
-def log_response(method, status, data, txt):
 
+def log_response(method, status, data, txt):
     msg = {
         "method": method,
         "status": status,
@@ -142,8 +142,7 @@ def log_response(method, status, data, txt):
 # This function performs a basic health check. We will flesh this out.
 @application.route("/health", methods=["GET"])
 def health_check():
-
-    rsp_data = { "status": "healthy", "time": str(datetime.now()) }
+    rsp_data = {"status": "healthy", "time": str(datetime.now())}
     rsp_str = json.dumps(rsp_data)
     rsp = Response(rsp_str, status=200, content_type="application/json")
     return rsp
@@ -151,21 +150,22 @@ def health_check():
 
 @application.route("/demo/<parameter>", methods=["GET", "POST"])
 def demo(parameter):
-
-    inputs = log_and_extract_input(demo, { "parameter": parameter })
+    inputs = log_and_extract_input(demo, {"parameter": parameter})
 
     msg = {
-        "/demo received the following inputs" : inputs
+        "/demo received the following inputs": inputs
     }
 
     rsp = Response(json.dumps(msg), status=200, content_type="application/json")
     return rsp
 
+
 """ Implement /api/registrations """
+
 
 @application.route("/api/registrations", methods=["POST"])
 def register():
-    inputs = log_and_extract_input(demo, { "parameter": None })
+    inputs = log_and_extract_input(demo, {"parameter": None})
     # msg = {
     #     "/api/registrations received the following inputs" : inputs
     # }
@@ -197,12 +197,40 @@ def register():
     return full_rsp
 
 
+''' Implement Etag'''
+@application.route("/api/<id>", methods=["GET", "PUT"])
+def resource_by_id(id):
+    context = log_and_extract_input(resource_by_id, {'id': id})
+    user_id = context.get('path_params')
+    result = UserService.get_by_id(user_id.get('id'))
+    user_info = context.get('body')
+    if request.method == 'GET':
+        etag = hash(frozenset(result.items()))
+        rsp = Response(json.dumps(result), status=200, content_type="application/json")
+        rsp.headers["Etag"] = etag
+        return rsp
+    if request.method == 'PUT':
+        head = context.get('headers')
+        prev_etag = head.get('Etag')
+        if prev_etag is None:
+            rsp = Response(json.dumps({"403 Forbidden ": "Please supply conditional headers"}), status=403,
+                           content_type="application/json")
+            return rsp
+        curr_etag = hash(frozenset(result.items()))
+        if prev_etag == str(curr_etag):
+            res, data = UserService.update_userinfo(user_info, user_id.get('id'))
+            rsp = Response(json.dumps({"No.of users updated": res}), status=200,
+                           content_type="application/json")
+        else:
+            rsp = Response(json.dumps({"412": "Precondition Failed"}), status=412, content_type="application/json")
+        return rsp
+
+
 @application.route("/api/user/<email>", methods=["GET", "PUT", "DELETE"])
 def user_email(email):
-
     global _user_service
 
-    inputs = log_and_extract_input(demo, { "parameters": email })
+    inputs = log_and_extract_input(demo, {"parameters": email})
     rsp_data = None
     rsp_status = None
     rsp_txt = None
@@ -245,24 +273,24 @@ def user_email(email):
 
     return full_rsp
 
+
 @application.route("/api/verifyuser/<email>", methods=["PUT"])
 def user_verify(email):
-
     global _user_service
-    inputs = log_and_extract_input(demo, { "parameters": email })
+    inputs = log_and_extract_input(demo, {"parameters": email})
     rsp_data = None
     rsp_status = None
     rsp_txt = None
 
     try:
-        source = inputs['body']['source'] if 'source' in inputs['body'] else None 
+        source = inputs['body']['source'] if 'source' in inputs['body'] else None
 
         if is_user_authorised(source):
 
             user_service = _get_user_service()
 
             logger.error("/email: _user_service = " + str(user_service))
-            
+
             rsp = user_service.update_user_status(email, 'ACTIVE')
             if rsp is not None:
                 rsp_data = rsp
@@ -278,7 +306,7 @@ def user_verify(email):
             else:
                 full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
         else:
-            full_rsp = Response(json.dumps({'message':'Not Authorised'}), status=403, content_type="application/json")
+            full_rsp = Response(json.dumps({'message': 'Not Authorised'}), status=403, content_type="application/json")
 
     except Exception as e:
         log_msg = "/email: Exception = " + str(e)
@@ -291,9 +319,9 @@ def user_verify(email):
 
     return full_rsp
 
+
 @application.route("/api/resource/<primary_key>", methods=["GET"])
 def user_resource_primary_key(primary_key):
-
     global _user_service
 
     inputs = log_and_extract_input(demo)
@@ -301,12 +329,12 @@ def user_resource_primary_key(primary_key):
     rsp_status = None
     rsp_txt = None
 
-    if 1:#try:
+    if 1:  # try:
 
         user_service = _get_user_service()
 
         logger.error("/email: _user_service = " + str(user_service))
-        print (inputs)
+        print(inputs)
 
         if inputs["method"] == "GET":
             if 'f' in inputs['query_params']:
@@ -342,9 +370,9 @@ def user_resource_primary_key(primary_key):
 
     return full_rsp
 
+
 @application.route("/api/resource", methods=["GET"])
 def user_resource():
-
     global _user_service
 
     inputs = log_and_extract_input(demo)
@@ -357,7 +385,7 @@ def user_resource():
         user_service = _get_user_service()
 
         logger.error("/email: _user_service = " + str(user_service))
-        print (inputs)
+        print(inputs)
 
         if inputs["method"] == "GET":
             if 'f' in inputs['query_params']:
@@ -394,19 +422,20 @@ def user_resource():
 
     return full_rsp
 
+
 def is_user_authorised(source):
     user_source = jwt.decode(source, 'verify-user-234234', algorithm='HS256')
     user = user_source['source']
-    if user == 'lambda-tse-verify-user-6634':  #Add check for individual users later
+    if user == 'lambda-tse-verify-user-6634':  # Add check for individual users later
         return True
     return False
+
 
 logger.debug("__name__ = " + str(__name__))
 # run the app.
 if __name__ == "__main__":
     # Setting debug to True enables debug output. This line should be
     # removed before deploying a production app.
-
 
     logger.debug("Starting Project EB at time: " + str(datetime.now()))
     init()
