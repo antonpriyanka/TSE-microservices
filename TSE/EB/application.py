@@ -18,6 +18,8 @@ from Context.Context import Context
 import Middleware.notification as notification
 from Middleware.authorization import *
 from Middleware.utils import *
+from Address.Address import *
+from Address import *
 
 # Setup and use the simple, common Python logging framework. Send log messages to the console.
 # The application should get the log level out of the context. We will change later.
@@ -495,6 +497,28 @@ def user_resource():
     log_response("/api/resource", rsp_status, rsp_data, rsp_txt)
 
     return full_rsp
+
+
+@application.route("/addresses/<address_id>", methods=["GET"])
+def address_get(address_id):
+    print("getting address by id")
+    rsp_txt = "Getting by dynamoDB."
+    full_address = AddressService.get_address(address_id)
+    print(full_address['Item'])
+    full_rsp = Response(json.dumps(full_address['Item']), status=200, content_type="application/json")
+    return full_rsp
+
+
+@application.route("/addresses", methods=["POST"])
+def address_put():
+    res = request.json
+    print(res)
+    print("Querying smartysheets")
+    rsp_txt = "Quering smarty sheets"
+    AddressService.put_address(res)
+    full_rsp = Response(rsp_txt, status=200, content_type="text/plain")
+    return full_rsp
+
 
 logger.debug("__name__ = " + str(__name__))
 # run the app.
