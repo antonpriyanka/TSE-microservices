@@ -16,6 +16,8 @@ from CustomerInfo.Users import UsersService as UserService
 from Context.Context import Context
 
 import Middleware.notification as notification
+from Middleware.authorization import *
+from Middleware.utils import *
 
 # Setup and use the simple, common Python logging framework. Send log messages to the console.
 # The application should get the log level out of the context. We will change later.
@@ -48,7 +50,7 @@ footer_text = '</body>\n</html>'
 # EB looks for an 'application' callable by default.
 # This is the top-level application that receives and routes requests.
 application = Flask(__name__)
-CORS(application)
+CORS(application, resources={r"/*": {"origins": "*"}})
 
 # add a rule for the index page. (Put here by AWS in the sample)
 application.add_url_rule('/', 'index', (lambda: header_text +
@@ -234,10 +236,17 @@ def user_email(email):
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
             rsp['headers'] = {
-                "Etag": str(server_etag)
+                "Etag": str(server_etag),
+                "authorization": str(create_authorization_token(email)), 
+                'Access-Control-Allow-Origin':'*'
             }
 
         elif inputs["method"] == "PUT":
+            source = inputs['headers']["authorization"]
+            if not is_user_authorized_to_put(source, email):
+                rsp_status = 403
+                rsp_txt = "Forbidden. Not authorized"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
             if user_etag is None:
                 rsp_status = 403
                 rsp_txt = "Forbidden. Please provide conditional headers"
@@ -250,6 +259,11 @@ def user_email(email):
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
         elif inputs["method"] == "DELETE":
+            source = inputs['headers']["authorization"]
+            if not is_user_authorized_to_delete(email):
+                rsp_status = 403
+                rsp_txt = "Forbidden. Not authorized"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
             rsp = user_service.delete_user(email)
 
         if rsp is not None:
@@ -298,6 +312,11 @@ def user_register():
 
         if rsp is not None:
             rsp_data = rsp
+            response_headers = dict()
+            response_headers["authorization"] =  str(create_authorization_token(inputs['body']['email'])), 
+            response_headers["Access-Control-Allow-Origin"] = '*'
+            response_headers["Access-Control-Expose-Headers"] = "authorization"
+
             rsp_status = 200
             rsp_txt = "OK"
         else:
@@ -309,7 +328,7 @@ def user_register():
             rsp_status = 404
 
         if rsp_data is not None:
-            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json", headers=response_headers)
         else:
             full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
@@ -336,7 +355,7 @@ def user_verify(email):
 
     try:
         source = inputs['body']['source'] if 'source' in inputs['body'] else None 
-        if notification.is_user_authorised(source):
+        if notification.is_user_authorized(source):
             user_service = _get_user_service()
             logger.error("/user_verify: _user_service = " + str(user_service))
             rsp = user_service.update_user_status(email, 'ACTIVE')
@@ -354,7 +373,7 @@ def user_verify(email):
             else:
                 full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
         else:
-            full_rsp = Response(json.dumps({'message':'Not Authorised'}), status=403, content_type="application/json")
+            full_rsp = Response(json.dumps({'message':'Not Authorized'}), status=403, content_type="application/json")
 
     except Exception as e:
         log_msg = "/user_verify: Exception = " + str(e)
