@@ -50,8 +50,8 @@ class UsersService(BaseService):
     @classmethod
     def get_by_creds(cls, creds):
         
-        result = UsersRDB.get_by_creds(creds)
-        return result
+        result, flag = UsersRDB.get_by_creds(creds)
+        return result, flag
 
     @classmethod
     def get_resources(cls, params, fields):
@@ -61,7 +61,7 @@ class UsersService(BaseService):
 
     @classmethod
     def get_resource_by_primary_key(cls, primary_key, fields):
-        template = {"id":primary_key}
+        template = {"id": primary_key}
         result = UsersRDB.get_by_params_and_fields(template, fields)
         return result
 

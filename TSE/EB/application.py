@@ -15,6 +15,8 @@ import jwt
 from CustomerInfo.Users import UsersService as UserService
 from Context.Context import Context
 
+import Middleware.notification as notification
+
 # Setup and use the simple, common Python logging framework. Send log messages to the console.
 # The application should get the log level out of the context. We will change later.
 #
@@ -164,18 +166,14 @@ def demo(parameter):
     rsp = Response(json.dumps(msg), status=200, content_type="application/json")
     return rsp
 
-""" Implement /api/registrations """
-
 @application.route("/api/registrations", methods=["POST"])
 def register():
-    inputs = log_and_extract_input(demo, { "parameter": None })
-    # msg = {
-    #     "/api/registrations received the following inputs" : inputs
-    # }
+    inputs = log_and_extract_input(register, { "parameter": None })
     rsp_data = None
     rsp_status = None
     rsp_txt = None
     result = None
+
     try:
         data = inputs["body"]
         user_service = _get_user_service()
@@ -204,22 +202,53 @@ def register():
 def user_email(email):
 
     global _user_service
+    
 
-    inputs = log_and_extract_input(demo, { "parameters": email })
+    inputs = log_and_extract_input(user_email, { "parameters": email })
     rsp_data = None
     rsp_status = None
     rsp_txt = None
+    print(inputs)
+    user_etag = None
+    server_etag = None
+
+    if 'Etag' in inputs['headers']:
+        user_etag = inputs['headers']['Etag']
 
     try:
-
         user_service = _get_user_service()
-
         logger.error("/email: _user_service = " + str(user_service))
 
+        rsp = user_service.get_by_email(email)
+
+        if rsp is None:
+            return Response("Resource not found", status=404, content_type="text/plain")
+
+        server_etag = hash(frozenset(rsp.items()))
+
         if inputs["method"] == "GET":
-            rsp = user_service.get_by_email(email)
+            # rsp = user_service.get_by_email(email)
+            if user_etag is not None and str(server_etag) == user_etag:
+                rsp_status = 304
+                rsp_txt = "Resource not modified"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+            rsp['headers'] = {
+                "Etag": str(server_etag)
+            }
+
         elif inputs["method"] == "PUT":
-            rsp = user_service.update_user(inputs['body'])
+            if user_etag is None:
+                rsp_status = 403
+                rsp_txt = "Forbidden. Please provide conditional headers"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+            if str(server_etag) == user_etag:
+                rsp = user_service.update_user(email, inputs['body'])
+            else:
+                rsp_status = 412
+                rsp_txt = "Preconditional check failed"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
         elif inputs["method"] == "DELETE":
             rsp = user_service.delete_user(email)
 
@@ -252,7 +281,7 @@ def user_email(email):
 def user_register():
     global _user_service
 
-    inputs = log_and_extract_input(demo, { "parameters": None })
+    inputs = log_and_extract_input(user_register, { "parameters": None })
     rsp_data = None
     rsp_status = None
     rsp_txt = None
@@ -265,16 +294,19 @@ def user_register():
             "email": inputs['body']['email'],
             "pw": inputs['body']['password']
         }
-        rsp = user_service.get_by_creds(creds)
+        rsp, flag = user_service.get_by_creds(creds)
 
         if rsp is not None:
             rsp_data = rsp
             rsp_status = 200
             rsp_txt = "OK"
         else:
+            if flag == "NOT_REGISTERED":
+                rsp_txt = "User not registered"
+            elif flag == "NOT_ACTIVATED":
+                rsp_txt = "Please click on activation link in email"
             rsp_data = None
             rsp_status = 404
-            rsp_txt = "User not registered"
 
         if rsp_data is not None:
             full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
@@ -282,7 +314,7 @@ def user_register():
             full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
     except Exception as e:
-        log_msg = "/email: Exception = " + str(e)
+        log_msg = "/user_register: Exception = " + str(e)
         logger.error(log_msg)
         rsp_status = 500
         rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
@@ -297,20 +329,16 @@ def user_register():
 def user_verify(email):
 
     global _user_service
-    inputs = log_and_extract_input(demo, { "parameters": email })
+    inputs = log_and_extract_input(user_verify, { "parameters": email })
     rsp_data = None
     rsp_status = None
     rsp_txt = None
 
     try:
         source = inputs['body']['source'] if 'source' in inputs['body'] else None 
-
-        if is_user_authorised(source):
-
+        if notification.is_user_authorised(source):
             user_service = _get_user_service()
-
-            logger.error("/email: _user_service = " + str(user_service))
-            
+            logger.error("/user_verify: _user_service = " + str(user_service))
             rsp = user_service.update_user_status(email, 'ACTIVE')
             if rsp is not None:
                 rsp_data = rsp
@@ -329,13 +357,13 @@ def user_verify(email):
             full_rsp = Response(json.dumps({'message':'Not Authorised'}), status=403, content_type="application/json")
 
     except Exception as e:
-        log_msg = "/email: Exception = " + str(e)
+        log_msg = "/user_verify: Exception = " + str(e)
         logger.error(log_msg)
         rsp_status = 500
         rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
         full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    log_response("/email", rsp_status, rsp_data, rsp_txt)
+    log_response("/user_verify", rsp_status, rsp_data, rsp_txt)
 
     return full_rsp
 
@@ -344,16 +372,19 @@ def user_resource_primary_key(primary_key):
 
     global _user_service
 
-    inputs = log_and_extract_input(demo)
+    inputs = log_and_extract_input(user_resource_primary_key, {"parameters": primary_key})
     rsp_data = None
     rsp_status = None
     rsp_txt = None
+    user_etag = None
+    server_etag = None
 
-    if 1:#try:
+    if 'Etag' in inputs['headers']:
+        user_etag = inputs['headers']['Etag']
 
+    try:
         user_service = _get_user_service()
-
-        logger.error("/email: _user_service = " + str(user_service))
+        logger.error("/user_resource_primary_key: _user_service = " + str(user_service))
         print (inputs)
 
         if inputs["method"] == "GET":
@@ -364,6 +395,13 @@ def user_resource_primary_key(primary_key):
             else:
                 fields = None
             rsp = user_service.get_resource_by_primary_key(primary_key, fields)
+            if rsp is not None:
+                server_etag = hash(frozenset(rsp.items()))
+                if user_etag is not None and str(server_etag) == user_etag:
+                    return Response("Resource not modified", status=304, content_type="text/plain")
+                rsp['headers'] = {
+                    'Etag': str(server_etag)
+                }
 
         if rsp is not None:
             rsp_data = rsp
@@ -379,14 +417,14 @@ def user_resource_primary_key(primary_key):
         else:
             full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    # except Exception as e:
-    #     log_msg = "/email: Exception = " + str(e)
-    #     logger.error(log_msg)
-    #     rsp_status = 500
-    #     rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
-    #     full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+    except Exception as e:
+        log_msg = "/api/resource/<primary_key>: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    log_response("/email", rsp_status, rsp_data, rsp_txt)
+    log_response("/api/resource/<primary_key>", rsp_status, rsp_data, rsp_txt)
 
     return full_rsp
 
@@ -395,17 +433,14 @@ def user_resource():
 
     global _user_service
 
-    inputs = log_and_extract_input(demo)
+    inputs = log_and_extract_input(user_resource, {"parameters": None})
     rsp_data = None
     rsp_status = None
     rsp_txt = None
 
     try:
-
         user_service = _get_user_service()
-
-        logger.error("/email: _user_service = " + str(user_service))
-        print (inputs)
+        logger.error("/user_resource: _user_service = " + str(user_service))
 
         if inputs["method"] == "GET":
             if 'f' in inputs['query_params']:
@@ -432,22 +467,15 @@ def user_resource():
             full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
     except Exception as e:
-        log_msg = "/email: Exception = " + str(e)
+        log_msg = "/api/resource: Exception = " + str(e)
         logger.error(log_msg)
         rsp_status = 500
         rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
         full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    log_response("/email", rsp_status, rsp_data, rsp_txt)
+    log_response("/api/resource", rsp_status, rsp_data, rsp_txt)
 
     return full_rsp
-
-def is_user_authorised(source):
-    user_source = jwt.decode(source, 'verify-user-234234', algorithm='HS256')
-    user = user_source['source']
-    if user == 'lambda-tse-verify-user-6634':  #Add check for individual users later
-        return True
-    return False
 
 logger.debug("__name__ = " + str(__name__))
 # run the app.

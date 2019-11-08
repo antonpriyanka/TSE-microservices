@@ -48,12 +48,23 @@ class UsersRDB(BaseDataObject):
         pw = creds['pw']
         sql = "select * from ebdb.users where email=%s and password=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(email, pw), fetch=True)
+        flag = "REGISTERED"
+        # status should be active as well
+        # 1. if status = pending, throw appropriate error
+        # 2. if status = active, works
         if data is not None and len(data) > 0:
-            result =  data[0]
+            sql = "select * from ebdb.users where email=%s and password=%s and status='ACTIVE'"
+            res2, data2 = data_adaptor.run_q(sql=sql, args=(email, pw), fetch=True)
+            if data2 is not None and len(data2) > 0:
+                result = data2[0]
+            else:
+                result = None
+                flag = "NOT_ACTIVATED"
         else:
             result = None
+            flag = "NOT_REGISTERED"
 
-        return result        
+        return result, flag
 
     @classmethod
     def get_by_params_and_fields(cls, params=None, fields=None):
