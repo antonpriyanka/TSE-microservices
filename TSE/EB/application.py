@@ -301,6 +301,49 @@ def user_email(email):
 
     return full_rsp
 
+
+@application.route("/api/user", methods=["POST"])
+def user_email():
+
+    global _user_service
+    
+
+    inputs = log_and_extract_input(user_email)
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+    print(inputs)
+    
+    try:
+        user_service = _get_user_service()
+        logger.error("/api/user: _user_service = " + str(user_service))
+
+        if inputs["method"] == "POST":
+            # rsp = user_service.get_by_email(email)
+            if "authorization" in inputs["headers"] and inputs["headers"]["authorization"]:
+                email = decode_token(inputs["headers"]["authorization"])
+                rsp = user_service.get_by_email(email)
+
+                rsp['headers'] = {
+                    "authorization": str(create_authorization_token(email)), 
+                    'Access-Control-Allow-Origin':'*'
+                }
+            if rsp is None:
+                return Response("Resource not found", status=404, content_type="text/plain")
+            else:
+                full_rsp = Response(json.dumps(rsp), status=200, content_type="application/json")
+
+    except Exception as e:
+        log_msg = "/email: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/email", rsp_status, rsp_data, rsp_txt)
+
+    return full_rsp
+
 @application.route("/api/login", methods=["POST"])
 def user_register():
     global _user_service

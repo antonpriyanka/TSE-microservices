@@ -52,7 +52,35 @@
                             });
                     });
                 },
+                checkLogin: function () {
 
+                    return new Promise(function(resolve, reject) {
+                        console.log("Check login.")
+                        var url = customer_service_base_url + "/user";
+                        
+                        let headers = new HttpHeaders({
+                            'Content-Type': 'application/json',
+                            'authorization': sStorage.getItem("token") });
+                        let options = { headers: headers };
+
+                        $http.post(url, null, options).success(
+                            function (data, status, headers) {
+                                var rsp = data;
+                                var h = headers();
+                                var result = data.data;
+                                console.log("Data = " + JSON.stringify(result, null, 4));
+                                console.log("Headers = " + JSON.stringify(h, null, 4))
+                                console.log("RSP = " + JSON.stringify(rsp, null, 4))
+
+                                var auth = h.authorization;
+                                sStorage.setItem("token", auth);
+                                resolve("OK")
+                            }).error(function (error) {
+                                console.log("Error = " + JSON.stringify(error, null, 4));
+                                reject("Error")
+                            });
+                    });
+                },
                 driveRegister: function (email, pw, pw2, fname, lname) {
 
                     // what about pw2??

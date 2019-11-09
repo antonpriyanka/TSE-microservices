@@ -34,6 +34,24 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
     // This should be a separately injected service.
     // I am lazy and for got how to do this.
     sStorage = $window.sessionStorage;
+    
+    $scope.checkLogin = function() {
+            CustomerService.checkLogin().then(function (result) {
+                console.log("User is already logged in!")
+                $scope.loginRegisterResult = true;
+                CustomerService.getCustomer($scope.lemail)
+                    .then(function(c) {
+                        $scope.customerInfo = c;
+                        $scope.$apply();
+                    })
+                    .catch(function(error) {
+                        console.log("Boom!")
+                    });
+            }).
+                catch(function(error) {
+                console.log("Error");
+            })
+    };
 
     $scope.navMenu = function(selection) {
         console.log("Selection = " + selection);
@@ -57,7 +75,7 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
     $scope.doLogout = function() {
         console.log('doing logout');
         // implement logout
-    }
+    };
 
     $scope.driveLogin = function() {
         if(!$scope.register) { // for login
