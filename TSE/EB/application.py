@@ -12,7 +12,7 @@ from datetime import datetime
 import json
 import jwt 
 
-from CustomerInfo.Users import UsersService as UserService
+from CustomerInfo.Users import UsersService as UserService, ProfileService
 from Context.Context import Context
 
 import Middleware.notification as notification
@@ -87,6 +87,14 @@ def _get_user_service():
         _user_service = UserService(_get_default_context())
 
     return _user_service
+
+def _get_profile_service():
+    global _profile_service
+
+    if _profile_service is None:
+        _profile_service = ProfileService(_get_default_context())
+
+    return _profile_service
 
 def init():
 
@@ -244,7 +252,7 @@ def user_email(email):
             }
 
         elif inputs["method"] == "PUT":
-            source = inputs['headers']["authorization"]
+            source = inputs['headers']["authorization"] if "authorization" in inputs['headers'] else None
             if not is_user_authorized_to_put(source, email):
                 rsp_status = 403
                 rsp_txt = "Forbidden. Not authorized"
@@ -261,8 +269,8 @@ def user_email(email):
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
         elif inputs["method"] == "DELETE":
-            source = inputs['headers']["authorization"]
-            if not is_user_authorized_to_delete(email):
+            source = inputs['headers']["authorization"] if "authorization" in inputs['headers'] else None
+            if not is_user_authorized_to_delete(source):
                 rsp_status = 403
                 rsp_txt = "Forbidden. Not authorized"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
@@ -356,7 +364,7 @@ def user_verify(email):
     rsp_txt = None
 
     try:
-        source = inputs['body']['source'] if 'source' in inputs['body'] else None 
+        source = inputs['headers']['authorization'] if 'authorization' in inputs['headers'] else None
         if notification.is_user_authorized(source):
             user_service = _get_user_service()
             logger.error("/user_verify: _user_service = " + str(user_service))
@@ -517,6 +525,216 @@ def address_put():
     rsp_txt = "Quering smarty sheets"
     AddressService.put_address(res)
     full_rsp = Response(rsp_txt, status=200, content_type="text/plain")
+    return full_rsp
+
+
+@application.route("/api/profile", methods=["POST", "GET"])
+def profile():
+    global _user_service
+
+    inputs = log_and_extract_input(user_profile, {"parameters": None})
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+
+    try:
+        profile_service = _get_profile_service()
+        logger.error("/api/profile: _user_service = " + str(profile_service))
+
+        if inputs["method"] == "GET":
+            if 'f' in inputs['query_params']:
+                fields = inputs['query_params']['f']
+                fields = fields.split(',')
+                inputs['query_params'].pop('f')
+            else:
+                fields = None
+            params = inputs['query_params']
+            rsp = profile_service.get_profile(params, fields)
+
+            # implement etag
+        elif inputs['method'] == 'POST':
+            data = inputs['body']
+            rsp = profile_service.create_profile(data)
+
+        if rsp is not None:
+            rsp_data = rsp
+            rsp_status = 200
+            rsp_txt = "OK"
+        else:
+            rsp_data = None
+            rsp_status = 404
+            rsp_txt = "NOT FOUND"
+
+        if rsp_data is not None:
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+        else:
+            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    except Exception as e:
+        log_msg = "/api/profile: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/api/profile", rsp_status, rsp_data, rsp_txt)
+
+    return full_rsp
+
+
+@application.route("/api/profile/<customer_id>", methods=["GET", "PUT", "DELETE"])
+def user_profile(customer_id):
+    global _user_service
+
+    inputs = log_and_extract_input(user_profile, {"parameters": customer_id})
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+    print(inputs)
+    user_etag = None
+    server_etag = None
+
+    if 'Etag' in inputs['headers']:
+        user_etag = inputs['headers']['Etag']
+
+    try:
+        user_service = _get_user_service()
+        profile_service = _get_profile_service()
+        logger.error("/api/profile/<customer_id>: _user_service = " + str(user_service))
+
+        rsp = profile_service.get_profile_by_customer_id(customer_id) # todo - implemented data object
+        user_profile_email = user_service.get_resource_by_primary_key(customer_id)["email"]
+
+        if rsp is None:
+            return Response("Resource not found", status=404, content_type="text/plain")
+
+        server_etag = hash(frozenset(rsp.items()))
+
+        if inputs["method"] == "GET":
+            # rsp = user_service.get_by_email(email)
+            if user_etag is not None and str(server_etag) == user_etag:
+                rsp_status = 304
+                rsp_txt = "Resource not modified"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+            rsp['headers'] = {
+                "Etag": str(server_etag),
+                'Access-Control-Allow-Origin': '*'
+            }
+
+        elif inputs["method"] == "PUT":
+            source = inputs['headers']["authorization"]
+            if not is_user_authorized_to_put(source, user_profile_email):
+                rsp_status = 403
+                rsp_txt = "Forbidden. Not authorized"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+            if user_etag is None:
+                rsp_status = 403
+                rsp_txt = "Forbidden. Please provide conditional headers"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+            if str(server_etag) == user_etag:
+                rsp = profile_service.update_profile(customer_id, inputs['body'])
+            else:
+                rsp_status = 412
+                rsp_txt = "Preconditional check failed"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+        elif inputs["method"] == "DELETE":
+            source = inputs['headers']["authorization"]
+            if not is_user_authorized_to_delete(source, user_profile_email):
+                rsp_status = 403
+                rsp_txt = "Forbidden. Not authorized"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+            rsp = profile_service.delete_profile(customer_id)
+
+        if rsp is not None:
+            rsp_data = rsp
+            rsp_status = 200
+            rsp_txt = "OK"
+        else:
+            rsp_data = None
+            rsp_status = 404
+            rsp_txt = "NOT FOUND"
+
+        if rsp_data is not None:
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+        else:
+            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    except Exception as e:
+        log_msg = "/api/profile/<customer_id>: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/api/profile/<customer_id>", rsp_status, rsp_data, rsp_txt)
+
+    return full_rsp
+
+
+@application.route("/api/customers/<customer_id>/profile", methods=["GET"])
+def user_profile(customer_id):
+    global _user_service
+
+    inputs = log_and_extract_input(user_profile, {"parameters": customer_id})
+    rsp_data = None
+    rsp_status = None
+    rsp_txt = None
+    print(inputs)
+    user_etag = None
+    server_etag = None
+
+    if 'Etag' in inputs['headers']:
+        user_etag = inputs['headers']['Etag']
+
+    try:
+        user_service = _get_user_service()
+        profile_service = _get_profile_service()
+        logger.error("/api/customers/<customer_id>/profile: _user_service = " + str(user_service))
+
+        rsp = profile_service.get_profile_by_customer_id(customer_id)
+
+        if rsp is None:
+            return Response("Resource not found", status=404, content_type="text/plain")
+
+        server_etag = hash(frozenset(rsp.items()))
+
+        if inputs["method"] == "GET":
+            # rsp = user_service.get_by_email(email)
+            if user_etag is not None and str(server_etag) == user_etag:
+                rsp_status = 304
+                rsp_txt = "Resource not modified"
+                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+            rsp['headers'] = {
+                "Etag": str(server_etag),
+                'Access-Control-Allow-Origin': '*'
+            }
+
+        if rsp is not None:
+            rsp_data = rsp
+            rsp_status = 200
+            rsp_txt = "OK"
+        else:
+            rsp_data = None
+            rsp_status = 404
+            rsp_txt = "NOT FOUND"
+
+        if rsp_data is not None:
+            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+        else:
+            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    except Exception as e:
+        log_msg = "/api/customers/<customer_id>/profile: Exception = " + str(e)
+        logger.error(log_msg)
+        rsp_status = 500
+        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+
+    log_response("/api/customers/<customer_id>/profile", rsp_status, rsp_data, rsp_txt)
+
     return full_rsp
 
 
