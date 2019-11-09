@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from Context.Context import Context
-from DataAccess.DataObject import UsersRDB as UsersRDB
+from DataAccess.DataObject import UsersRDB as UsersRDB, ProfileRDB
 import uuid 
 
 import boto3
@@ -60,7 +60,7 @@ class UsersService(BaseService):
         return result
 
     @classmethod
-    def get_resource_by_primary_key(cls, primary_key, fields):
+    def get_resource_by_primary_key(cls, primary_key, fields=None):
         template = {"id": primary_key}
         result = UsersRDB.get_by_params_and_fields(template, fields)
         return result
@@ -110,5 +110,56 @@ class UsersService(BaseService):
         result = UsersRDB.update_user(email, data)
         return result
 
+
+class ProfileService(BaseService):
+    required_create_fields = []
+
+    def __init__(self, ctx=None):
+
+        if ctx is None:
+            ctx = Context.get_default_context()
+
+        self._ctx = ctx
+
+    @classmethod
+    def get_profile_by_customer_id(cls, uuid):
+
+        result = ProfileRDB.get_profile_by_customer_id(uuid)
+        return result
+
+    @classmethod
+    def get_profile(cls, params, fields):
+
+        result = ProfileRDB.get_profile_by_params_and_fields(params, fields)
+        return result
+
+    @classmethod
+    def get_resource_by_primary_key(cls, primary_key, fields):
+        template = {"id": primary_key}
+        result = UsersRDB.get_by_params_and_fields(template, fields)
+        return result
+
+    @classmethod
+    def create_profile(cls, profile_info):
+
+        result = ProfileRDB.create_profile(profile_info=profile_info)
+        return result
+
+    @classmethod
+    def delete_profile(cls, uuid):
+        result = ProfileRDB.delete_profile(uuid)
+        return result
+
+    @classmethod
+    def update_user_status(cls, email, status="PENDING"):
+        data = {'status': status}
+        result = UsersRDB.update_user(email, data)
+        return result
+
+    classmethod
+
+    def update_profile(cls, uuid, data):
+        result = ProfileRDB.update_profile(uuid, data)
+        return result
 
 
