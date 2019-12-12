@@ -185,11 +185,15 @@ def register():
     rsp_status = None
     rsp_txt = None
     result = None
+    user_already_exists = False
 
     try:
         data = inputs["body"]
         user_service = _get_user_service()
-        result = user_service.create_user(data)
+        if user_service.get_by_email(data["email"]):
+            user_already_exists = True
+        else:
+            result = user_service.create_user(data)
     except:
         raise Exception()
 
@@ -197,6 +201,10 @@ def register():
         rsp_data = result
         rsp_status = 201
         rsp_txt = "RESOURCE CREATED"
+    if user_already_exists:
+        rsp_data = None
+        rsp_status = 400
+        rsp_txt = "USER ALREADY EXISTS"
     else:
         rsp_data = None
         rsp_status = 404
@@ -302,47 +310,47 @@ def user_email(email):
     return full_rsp
 
 
-@application.route("/api/user", methods=["POST"])
-def user_email():
+# @application.route("/api/user", methods=["POST"])
+# def user_email():
 
-    global _user_service
+#     global _user_service
     
 
-    inputs = log_and_extract_input(user_email)
-    rsp_data = None
-    rsp_status = None
-    rsp_txt = None
-    print(inputs)
+#     inputs = log_and_extract_input(user_email)
+#     rsp_data = None
+#     rsp_status = None
+#     rsp_txt = None
+#     print(inputs)
     
-    try:
-        user_service = _get_user_service()
-        logger.error("/api/user: _user_service = " + str(user_service))
+#     try:
+#         user_service = _get_user_service()
+#         logger.error("/api/user: _user_service = " + str(user_service))
 
-        if inputs["method"] == "POST":
-            # rsp = user_service.get_by_email(email)
-            if "authorization" in inputs["headers"] and inputs["headers"]["authorization"]:
-                email = decode_token(inputs["headers"]["authorization"])
-                rsp = user_service.get_by_email(email)
+#         if inputs["method"] == "POST":
+#             # rsp = user_service.get_by_email(email)
+#             if "authorization" in inputs["headers"] and inputs["headers"]["authorization"]:
+#                 email = decode_token(inputs["headers"]["authorization"])
+#                 rsp = user_service.get_by_email(email)
 
-                rsp['headers'] = {
-                    "authorization": str(create_authorization_token(email)), 
-                    'Access-Control-Allow-Origin':'*'
-                }
-            if rsp is None:
-                return Response("Resource not found", status=404, content_type="text/plain")
-            else:
-                full_rsp = Response(json.dumps(rsp), status=200, content_type="application/json")
+#                 rsp['headers'] = {
+#                     "authorization": str(create_authorization_token(email)), 
+#                     'Access-Control-Allow-Origin':'*'
+#                 }
+#             if rsp is None:
+#                 return Response("Resource not found", status=404, content_type="text/plain")
+#             else:
+#                 full_rsp = Response(json.dumps(rsp), status=200, content_type="application/json")
 
-    except Exception as e:
-        log_msg = "/email: Exception = " + str(e)
-        logger.error(log_msg)
-        rsp_status = 500
-        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
-        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#     except Exception as e:
+#         log_msg = "/email: Exception = " + str(e)
+#         logger.error(log_msg)
+#         rsp_status = 500
+#         rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+#         full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    log_response("/email", rsp_status, rsp_data, rsp_txt)
+#     log_response("/email", rsp_status, rsp_data, rsp_txt)
 
-    return full_rsp
+#     return full_rsp
 
 @application.route("/api/login", methods=["POST"])
 def user_register():
@@ -408,7 +416,7 @@ def user_verify(email):
 
     try:
         source = inputs['headers']['authorization'] if 'authorization' in inputs['headers'] else None
-        if notification.is_user_authorized(source):
+        if is_user_authorized(source):
             user_service = _get_user_service()
             logger.error("/user_verify: _user_service = " + str(user_service))
             rsp = user_service.update_user_status(email, 'ACTIVE')
@@ -625,95 +633,95 @@ def profile():
     return full_rsp
 
 
-@application.route("/api/profile/<customer_id>", methods=["GET", "PUT", "DELETE"])
-def user_profile(customer_id):
-    global _user_service
+# @application.route("/api/profile/<customer_id>", methods=["GET", "PUT", "DELETE"])
+# def user_profile(customer_id):
+#     global _user_service
 
-    inputs = log_and_extract_input(user_profile, {"parameters": customer_id})
-    rsp_data = None
-    rsp_status = None
-    rsp_txt = None
-    print(inputs)
-    user_etag = None
-    server_etag = None
+#     inputs = log_and_extract_input(user_profile, {"parameters": customer_id})
+#     rsp_data = None
+#     rsp_status = None
+#     rsp_txt = None
+#     print(inputs)
+#     user_etag = None
+#     server_etag = None
 
-    if 'Etag' in inputs['headers']:
-        user_etag = inputs['headers']['Etag']
+#     if 'Etag' in inputs['headers']:
+#         user_etag = inputs['headers']['Etag']
 
-    try:
-        user_service = _get_user_service()
-        profile_service = _get_profile_service()
-        logger.error("/api/profile/<customer_id>: _user_service = " + str(user_service))
+#     try:
+#         user_service = _get_user_service()
+#         profile_service = _get_profile_service()
+#         logger.error("/api/profile/<customer_id>: _user_service = " + str(user_service))
 
-        rsp = profile_service.get_profile_by_customer_id(customer_id) # todo - implemented data object
-        user_profile_email = user_service.get_resource_by_primary_key(customer_id)["email"]
+#         rsp = profile_service.get_profile_by_customer_id(customer_id) # todo - implemented data object
+#         user_profile_email = user_service.get_resource_by_primary_key(customer_id)["email"]
 
-        if rsp is None:
-            return Response("Resource not found", status=404, content_type="text/plain")
+#         if rsp is None:
+#             return Response("Resource not found", status=404, content_type="text/plain")
 
-        server_etag = hash(frozenset(rsp.items()))
+#         server_etag = hash(frozenset(rsp.items()))
 
-        if inputs["method"] == "GET":
-            # rsp = user_service.get_by_email(email)
-            if user_etag is not None and str(server_etag) == user_etag:
-                rsp_status = 304
-                rsp_txt = "Resource not modified"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#         if inputs["method"] == "GET":
+#             # rsp = user_service.get_by_email(email)
+#             if user_etag is not None and str(server_etag) == user_etag:
+#                 rsp_status = 304
+#                 rsp_txt = "Resource not modified"
+#                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-            rsp['headers'] = {
-                "Etag": str(server_etag),
-                'Access-Control-Allow-Origin': '*'
-            }
+#             rsp['headers'] = {
+#                 "Etag": str(server_etag),
+#                 'Access-Control-Allow-Origin': '*'
+#             }
 
-        elif inputs["method"] == "PUT":
-            source = inputs['headers']["authorization"]
-            if not is_user_authorized_to_put(source, user_profile_email):
-                rsp_status = 403
-                rsp_txt = "Forbidden. Not authorized"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
-            if user_etag is None:
-                rsp_status = 403
-                rsp_txt = "Forbidden. Please provide conditional headers"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
-            if str(server_etag) == user_etag:
-                rsp = profile_service.update_profile(customer_id, inputs['body'])
-            else:
-                rsp_status = 412
-                rsp_txt = "Preconditional check failed"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#         elif inputs["method"] == "PUT":
+#             source = inputs['headers']["authorization"]
+#             if not is_user_authorized_to_put(source, user_profile_email):
+#                 rsp_status = 403
+#                 rsp_txt = "Forbidden. Not authorized"
+#                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#             if user_etag is None:
+#                 rsp_status = 403
+#                 rsp_txt = "Forbidden. Please provide conditional headers"
+#                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#             if str(server_etag) == user_etag:
+#                 rsp = profile_service.update_profile(customer_id, inputs['body'])
+#             else:
+#                 rsp_status = 412
+#                 rsp_txt = "Preconditional check failed"
+#                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-        elif inputs["method"] == "DELETE":
-            source = inputs['headers']["authorization"]
-            if not is_user_authorized_to_delete(source, user_profile_email):
-                rsp_status = 403
-                rsp_txt = "Forbidden. Not authorized"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
-            rsp = profile_service.delete_profile(customer_id)
+#         elif inputs["method"] == "DELETE":
+#             source = inputs['headers']["authorization"]
+#             if not is_user_authorized_to_delete(source, user_profile_email):
+#                 rsp_status = 403
+#                 rsp_txt = "Forbidden. Not authorized"
+#                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#             rsp = profile_service.delete_profile(customer_id)
 
-        if rsp is not None:
-            rsp_data = rsp
-            rsp_status = 200
-            rsp_txt = "OK"
-        else:
-            rsp_data = None
-            rsp_status = 404
-            rsp_txt = "NOT FOUND"
+#         if rsp is not None:
+#             rsp_data = rsp
+#             rsp_status = 200
+#             rsp_txt = "OK"
+#         else:
+#             rsp_data = None
+#             rsp_status = 404
+#             rsp_txt = "NOT FOUND"
 
-        if rsp_data is not None:
-            full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
-        else:
-            full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#         if rsp_data is not None:
+#             full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json")
+#         else:
+#             full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    except Exception as e:
-        log_msg = "/api/profile/<customer_id>: Exception = " + str(e)
-        logger.error(log_msg)
-        rsp_status = 500
-        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
-        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+#     except Exception as e:
+#         log_msg = "/api/profile/<customer_id>: Exception = " + str(e)
+#         logger.error(log_msg)
+#         rsp_status = 500
+#         rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+#         full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-    log_response("/api/profile/<customer_id>", rsp_status, rsp_data, rsp_txt)
+#     log_response("/api/profile/<customer_id>", rsp_status, rsp_data, rsp_txt)
 
-    return full_rsp
+#     return full_rsp
 
 
 @application.route("/api/customers/<customer_id>/profile", methods=["GET"])
