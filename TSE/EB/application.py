@@ -375,6 +375,7 @@ def user_register():
             "pw": inputs['body']['password']
         }
         rsp, flag = user_service.get_by_creds(creds)
+        print (rsp)
 
         if rsp is not None:
             rsp_data = rsp
