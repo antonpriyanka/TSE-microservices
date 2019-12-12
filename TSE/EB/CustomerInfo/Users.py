@@ -85,6 +85,7 @@ class UsersService(BaseService):
             user_info['id'] = id1
         result = UsersRDB.create_user(user_info=user_info)
 
+        print ("RESULT FOR CREATE USER")
         print (result)
         if result is not None:
             # publish email to the SNS topic

@@ -201,7 +201,7 @@ def register():
         rsp_data = result
         rsp_status = 201
         rsp_txt = "RESOURCE CREATED"
-    if user_already_exists:
+    elif user_already_exists:
         rsp_data = None
         rsp_status = 400
         rsp_txt = "USER ALREADY EXISTS"
@@ -240,6 +240,11 @@ def user_email(email):
         logger.error("/email: _user_service = " + str(user_service))
 
         rsp = user_service.get_by_email(email)
+        if "created_on" in rsp:
+            user_since = (rsp["created_on"] - datetime.now()).days
+            rsp['user_since'] = user_since
+            del rsp['created_on']
+        # print (rsp)
 
         if rsp is None:
             return Response("Resource not found", status=404, content_type="text/plain")
