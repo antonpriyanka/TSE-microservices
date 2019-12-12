@@ -3,14 +3,15 @@ from abc import ABC, abstractmethod
 import pymysql.err
 import json
 
-class DataException(Exception):
 
-    unknown_error   =   1001
-    duplicate_key   =   1002
+class DataException(Exception):
+    unknown_error = 1001
+    duplicate_key = 1002
 
     def __init__(self, code=unknown_error, msg="Something awful happened."):
         self.code = code
         self.msg = msg
+
 
 class BaseDataObject(ABC):
 
@@ -36,7 +37,7 @@ class UsersRDB(BaseDataObject):
         sql = "select * from ebdb.users where email=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(email), fetch=True)
         if data is not None and len(data) > 0:
-            result =  data[0]
+            result = data[0]
         else:
             result = None
 
@@ -45,8 +46,20 @@ class UsersRDB(BaseDataObject):
     @classmethod
     def get_by_id(cls, id):
 
-        sql = "select * from ebdb.users where auto_id=%s"
+        sql = "select id,last_name,first_name,email,status,password from ebdb.users where id=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(id), fetch=True)
+        if data is not None and len(data) > 0:
+            result = data[0]
+        else:
+            result = None
+
+        return result
+
+    @classmethod
+    def get_profile_by_userid(cls, user_id):
+
+        sql = "select * from ebdb.profile where user_id=%s"
+        res, data = data_adaptor.run_q(sql=sql, args=(user_id), fetch=True)
         if data is not None and len(data) > 0:
             result = data[0]
         else:
@@ -61,7 +74,7 @@ class UsersRDB(BaseDataObject):
 
         res, data = data_adaptor.run_q(sql=sql, args=args, fetch=True)
         if data is not None and len(data) > 0:
-            result =  data[0]
+            result = data[0]
         else:
             result = None
 
@@ -99,7 +112,6 @@ class UsersRDB(BaseDataObject):
             print(e)
             return None
 
-
     @classmethod
     def update_user(cls, email, data):
         try:
@@ -115,9 +127,13 @@ class UsersRDB(BaseDataObject):
 
     @classmethod
     def update_userinfo(cls, user_info, id):
-        sql,args = data_adaptor.create_update(table_name='users', new_values=user_info, template={'auto_id': id})
+        sql, args = data_adaptor.create_update(table_name='users', new_values=user_info, template={'id': id})
         res, data = data_adaptor.run_q(sql, args)
-        return res,data
+        return res, data
 
-
-
+    @classmethod
+    def update_profileinfo(cls, profile_info,template):
+        sql, args = data_adaptor.create_update(table_name='profile', new_values=profile_info,
+                                               template=template)
+        res, data = data_adaptor.run_q(sql, args)
+        return res, data

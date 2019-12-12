@@ -198,6 +198,8 @@ def register():
 
 
 ''' Implement Etag'''
+
+
 @application.route("/api/<id>", methods=["GET", "PUT"])
 def resource_by_id(id):
     context = log_and_extract_input(resource_by_id, {'id': id})
@@ -224,6 +226,30 @@ def resource_by_id(id):
         else:
             rsp = Response(json.dumps({"412": "Precondition Failed"}), status=412, content_type="application/json")
         return rsp
+
+
+@application.route("/api/profile", methods=["GET", "POST"])
+def user_profile():
+    rsp = None
+    try:
+        context = log_and_extract_input(user_profile)
+        template = context.get('query_params')
+        profile_info = context.get('body')
+
+        if request.method == 'GET':
+            result = UserService.get_profile_by_userid(template.get('user_id'))
+            rsp = Response(json.dumps(result), status=200, content_type="application/json")
+            return rsp
+
+        if request.method == 'POST':
+            res, data = UserService.update_profileinfo(profile_info, template)
+            rsp = Response(json.dumps({"No.of users updated": res}), status=200,
+                           content_type="application/json")
+            return rsp
+
+    except Exception as e:
+        print("Exception e = ", e)
+        return handle_error(e, rsp)
 
 
 @application.route("/api/user/<email>", methods=["GET", "PUT", "DELETE"])
@@ -429,6 +455,10 @@ def is_user_authorised(source):
     if user == 'lambda-tse-verify-user-6634':  # Add check for individual users later
         return True
     return False
+
+
+def handle_error(e, result):
+    return "Internal error.", 504, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 logger.debug("__name__ = " + str(__name__))

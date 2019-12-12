@@ -52,12 +52,19 @@ class UsersService(BaseService):
         result = UsersRDB.get_by_id(id)
         return result
 
+    @classmethod
+    def get_profile_by_userid(cls, user_id):
+
+        result = UsersRDB.get_profile_by_userid(user_id)
+        return result
+
 
     @classmethod
     def get_resources(cls, params, fields):
 
         result = UsersRDB.get_by_params_and_fields(params, fields)
         return result
+
 
     @classmethod
     def get_resource_by_primary_key(cls, primary_key, fields):
@@ -106,7 +113,7 @@ class UsersService(BaseService):
         result = UsersRDB.update_user(email, data)
         return result
 
-    classmethod
+    @classmethod
     def update_user(cls, email, data):
         result = UsersRDB.update_user(email, data)
         return result
@@ -116,3 +123,9 @@ class UsersService(BaseService):
     def update_userinfo(cls, user_info, id):
         res ,data = UsersRDB.update_userinfo(user_info, id)
         return res ,data
+
+    @classmethod
+    def update_profileinfo(cls,profile_info, template):
+        res, data = UsersRDB.update_profileinfo(profile_info,template)
+        return res, data
+
