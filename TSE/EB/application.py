@@ -333,18 +333,19 @@ def check_user_login():
 
         if inputs["method"] == "POST":
             # rsp = user_service.get_by_email(email)
-            if "authorization" in inputs["headers"] and inputs["headers"]["authorization"]:
-                email = decode_token(inputs["headers"]["authorization"])
-                rsp = user_service.get_by_email(email)
-
-                rsp['headers'] = {
+            print(inputs)
+            if "Authorization" in inputs["headers"] and inputs["headers"]["Authorization"]:
+                email = decode_token(inputs["headers"]["Authorization"])["source"]
+                rsp_data = user_service.get_by_email(email)
+                print('fwefw', rsp_data)
+                rsp_data['headers'] = {
                     "authorization": str(create_authorization_token(email)), 
                     'Access-Control-Allow-Origin':'*'
                 }
-            if rsp is None:
+            if rsp_data is None:
                 return Response("Resource not found", status=404, content_type="text/plain")
             else:
-                full_rsp = Response(json.dumps(rsp), status=200, content_type="application/json")
+                full_rsp = Response(json.dumps(rsp_data), status=200, content_type="application/json")
 
     except Exception as e:
         log_msg = "/email: Exception = " + str(e)
