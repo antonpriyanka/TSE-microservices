@@ -338,7 +338,7 @@ def check_user_login():
                 email = decode_token(inputs["headers"]["Authorization"])["source"]
                 rsp_data = user_service.get_by_email(email)
                 print('fwefw', rsp_data)
-                if "created_on" in rsp:
+                if "created_on" in rsp_data:
                     user_since = rsp_data["created_on"].strftime("%d-%b-%Y")
                     rsp_data['user_since'] = user_since
                     del rsp_data['created_on']
