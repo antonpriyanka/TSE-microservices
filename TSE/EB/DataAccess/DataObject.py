@@ -114,10 +114,21 @@ class UsersRDB(BaseDataObject):
 
     @classmethod
     def delete_user(cls, email):
+        # try:
+        #     sql = "delete from ebdb.users where email=%s"
+        #     data_adaptor.run_q(sql=sql, args=(email), fetch=False)
+        #     return "User deleted successfully"
+        # except Exception as e:
+        #     print(e)
+        #     return None
         try:
-            sql = "delete from ebdb.users where email=%s"
-            data_adaptor.run_q(sql=sql, args=(email), fetch=False)
-            return "User deleted successfully"
+            template = {
+                "email": email
+            }
+            data = {"status":"DELETED"}
+            sql, args = data_adaptor.create_update("ebdb.users", data, template) 
+            data_adaptor.run_q(sql=sql, args=args, fetch=True)
+            return "Resource updated successfully"
         except Exception as e:
             print(e)
             return None

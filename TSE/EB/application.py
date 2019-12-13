@@ -282,6 +282,7 @@ def user_email(email):
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
         elif inputs["method"] == "DELETE":
+            print ("JHERERER")
             source = inputs['headers']["authorization"] if "authorization" in inputs['headers'] else None
             if not is_user_authorized_to_delete(source):
                 rsp_status = 403
