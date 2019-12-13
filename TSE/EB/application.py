@@ -241,7 +241,7 @@ def user_email(email):
 
         rsp = user_service.get_by_email(email)
         if "created_on" in rsp:
-            user_since = (rsp["created_on"] - datetime.now()).days
+            user_since = rsp["created_on"].strftime("%d-%b-%Y")
             rsp['user_since'] = user_since
             del rsp['created_on']
         # print (rsp)
