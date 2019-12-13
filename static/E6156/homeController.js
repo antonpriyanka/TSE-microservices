@@ -59,6 +59,33 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
         // implement logout
     }
 
+    $scope.checkLoginOnLoad = function() {
+        console.log("Checking login on page load")
+
+        // if session storage auth token is undefined, return
+        // else call an API to get the original email for it
+
+        CustomerService.checkLogin().then(function (result) {
+            console.log("Resolved!")
+            $scope.loginRegisterResult = true;
+            console.log($scope.lemail);
+            CustomerService.getCustomer($scope.lemail)
+                .then(function(c) {
+                    console.log("checking customerInfo respo");
+                    console.log(c);
+                    $scope.customerInfo = c;
+                    $scope.$apply();
+                })
+                .catch(function(error) {
+                    console.log("Boom!")
+                });
+        }).
+            catch(function(error) {
+            console.log("Error");
+            console.log(error);
+        })        
+    };
+
     $scope.driveLogin = function() {
         if(!$scope.register) { // for login
             CustomerService.driveLogin(
@@ -68,6 +95,8 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
                 $scope.loginRegisterResult = true;
                 CustomerService.getCustomer($scope.lemail)
                     .then(function(c) {
+                        console.log("checking customerInfo respo");
+                        console.log(c);
                         $scope.customerInfo = c;
                         $scope.$apply();
                     })

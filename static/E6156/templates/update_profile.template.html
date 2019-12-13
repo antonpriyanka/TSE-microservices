@@ -1,0 +1,78 @@
+
+<div class="container" ng-show="loginRegisterResult" ng-app="CustomerApp" ng-controller="profileController">
+    <div style="height: 40px;"></div>
+<!-- 
+            <form>
+                First Name: <input type="text" ng-model="firstnamee">
+                Last Name: <input type="text" ng-model="lastnamee">
+                
+            </form> -->
+            <h3> Personal Details</h3>
+            <form>
+              <div class="form-group">
+                <label for="exampleInputFirstname">First name</label>
+                <input ng-model="firstNameUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter first name">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Last name</label>
+                <input ng-model="lastNameUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter last name">
+              </div>
+              <a class="btn btn-primary" ng-click="doUpdatePersonal()">Edit personal details</a>
+            </form>
+        <!-- </div> -->
+    <!-- </div> -->
+    <div style="height: 40px;"></div>
+
+            <h3> Profile details</h3>
+            <form>
+              <h4>Home</h4>
+              <div class="form-group">
+                <label for="exampleInputFirstname">Address</label>
+                <input ng-model="homeAddressUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter new address">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Phone</label>
+                <input ng-model="homePhoneUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter new phone">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Email</label>
+                <input ng-model="homeEmailUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter new Email">
+              </div>
+
+              <br/>
+              <h4> Office </h4>
+              <div class="form-group">
+                <label for="exampleInputFirstname">Address</label>
+                <input ng-model="officeAddressUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter new address">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Phone</label>
+                <input ng-model="officePhoneUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter new phone">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Email</label>
+                <input ng-model="officeEmailUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter new Email">
+              </div>
+
+              <br/>
+              <h4> Other </h4>
+              <div class="form-group">
+                <label for="exampleInputFirstname">Address</label>
+                <input ng-model="otherAddressUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter new address">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Phone</label>
+                <input ng-model="otherPhoneUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter new phone">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputLastname">Email</label>
+                <input ng-model="otherEmailUpdate" type="text" class="form-control" id="exampleInputLastname"  aria-describedby="emailHelp" placeholder="Enter new Email">
+              </div>
+
+              <a class="btn btn-primary" ng-click="doUpdateProfile()">Edit profile details</a>
+            </form>
+
+    <div style="height: 40px;"></div>
+
+</div>
+<!-- /.container

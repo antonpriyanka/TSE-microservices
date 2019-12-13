@@ -17,6 +17,9 @@ config(['$locationProvider', '$routeProvider',
         when('/profile', {
             templateUrl: 'templates/profile.template.html'
         }).
+        when('/update_profile', {
+            templateUrl: 'templates/update_profile.template.html'
+        }).
         when('/baseball', {
             templateUrl: 'templates/app.template.html'
         }).

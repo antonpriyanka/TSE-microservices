@@ -27,7 +27,7 @@
             <ul>
                 <li>{{customerInfo.last_name}}, {{customerInfo.first_name}}</li>
                 <li>{{customerInfo.email}}</li>
-                <li>Customer Since: {{customerInfo.created}}</li>
+                <li>Customer Since: {{customerInfo.user_since}}</li>
             </ul>
             <a class="btn btn-primary btn-lg" href="https://www.youtube.com/watch?v=f8e3JVFRIEk">Call to Action!</a>
         </div>
@@ -50,7 +50,7 @@
     <!-- Content Row -->
     <div class="row">
         <div  class="col-md-4 mb-4">
-            <div ng-show="!loginRegisterResult"class="card h-100">
+            <div ng-show="loginRegisterResult"class="card h-100">
                 <div class="card-body">
                     <h2 class="card-title">Some Latin</h2>
                     <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Rem magni quas ex numquam, maxime minus quam molestias corporis quod, ea minima accusamus.</p>

@@ -63,16 +63,17 @@
                         console.log("Check login.")
                         var url = customer_service_base_url + "/user";
                         
-                        let headers = new HttpHeaders({
+                        let headers1 = {
                             'Content-Type': 'application/json',
-                            'authorization': sStorage.getItem("token") });
-                        let options = { headers: headers };
+                            'authorization': sStorage.getItem("token") };
+                        let options = { headers: headers1 };
 
                         $http.post(url, null, options).success(
                             function (data, status, headers) {
                                 var rsp = data;
                                 var h = headers();
                                 var result = data.data;
+                                $scope.lemail = result.email;
                                 console.log("Data = " + JSON.stringify(result, null, 4));
                                 console.log("Headers = " + JSON.stringify(h, null, 4))
                                 console.log("RSP = " + JSON.stringify(rsp, null, 4))
