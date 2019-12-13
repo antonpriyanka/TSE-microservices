@@ -387,13 +387,12 @@ def user_register():
             rsp_status = 200
             rsp_txt = "OK"
         else:
-            if flag == "NOT_REGISTERED":
-                rsp_txt = "User not registered"
-            elif flag == "NOT_ACTIVATED":
-                rsp_txt = "Please click on activation link in email"
-            rsp_data = None
+            # if flag == "UNKNOWN_USER":
+            #     rsp_txt = "User not registered."
+            # elif flag == "NOT_ACTIVATED":
+            #     rsp_txt = "Please click on activation link in email"
+            rsp_txt = flag
             rsp_status = 404
-
         if rsp_data is not None:
             full_rsp = Response(json.dumps(rsp_data), status=rsp_status, content_type="application/json", headers=response_headers)
         else:

@@ -46,8 +46,13 @@
                                 var auth = h.authorization;
                                 sStorage.setItem("token", auth);
                                 resolve("OK")
+                                $('#loginModal').modal('hide');
                             }).error(function (error) {
-                                console.log("Error = " + JSON.stringify(error, null, 4));
+                                var error_msg = JSON.stringify(error);
+                                console.log("Error = " + error_msg);
+                                // $('#ErrorMessageLogin').innerHTML = "ERROR";
+                                // $scope.ErrorMessageLoginText = 'test'
+                                alert(error_msg);
                                 reject("Error")
                             });
                     });
