@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from Context.Context import Context
 from DataAccess.DataObject import UsersRDB as UsersRDB, ProfileRDB
+from Middleware.notification import publish_it
 import uuid 
 
 import boto3
@@ -84,13 +85,16 @@ class UsersService(BaseService):
             user_info['id'] = id1
         result = UsersRDB.create_user(user_info=user_info)
 
+        print ("RESULT FOR CREATE USER")
+        print (result)
         if result is not None:
             # publish email to the SNS topic
-            sns = boto3.client('sns', region_name='us-east-1')
-            resp = sns.publish(
-                TopicArn = 'arn:aws:sns:us-east-1:211747076064:tse-email-notif',
-                Message=user_info['email']
-            )
+            # sns = boto3.client('sns', region_name='us-east-1')
+            # resp = sns.publish(
+            #     TopicArn = 'arn:aws:sns:us-east-1:211747076064:tse-email-notif',
+            #     Message=user_info['email']
+            # )
+            resp = publish_it(user_info['email'])
             print(resp)
         return result
 

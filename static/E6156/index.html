@@ -29,15 +29,15 @@
 
   </head>
 
-  <body ng-app="CustomerApp" ng-controller="homeController">
+  <body ng-app="CustomerApp" ng-controller="homeController" data-ng-init="checkLoginOnLoad()">
 
     <div id="loginModal"  class="modal fade" role="dialog">
       <div class="modal-dialog">
         <!-- Modal content-->
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
             <h4 class="modal-title">Login or Register</h4>
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
           <div class="modal-body" >
             <form ng-show="!loginRegisterResult">
@@ -74,6 +74,7 @@
             </div>
           </div>
           <div class="modal-footer">
+            <!-- <div id= "ErrorMessageLogin" ng-model="ErrorMessageLoginText">This is some text!</div>   -->
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             <button  ng-show="loginOK()&&(!loginRegisterResult)" type="button" class="btn btn-default btn-primary" ng-click="driveLogin()">Login or Register</button>
           </div>

@@ -33,7 +33,7 @@ class UsersRDB(BaseDataObject):
     @classmethod
     def get_by_email(cls, email):
         print('email 2 is ', email)
-        sql = "select * from ebdb.users where email=%s"
+        sql = "select first_name, last_name, email, status, id, created_on from ebdb.users where email=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(email), fetch=True)
         if data is not None and len(data) > 0:
             result =  data[0]
@@ -46,23 +46,33 @@ class UsersRDB(BaseDataObject):
     def get_by_creds(cls, creds):
         email = creds['email']
         pw = creds['pw']
-        sql = "select * from ebdb.users where email=%s and password=%s"
+        sql = "select first_name, last_name, email, status, id from ebdb.users where email=%s and password=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(email, pw), fetch=True)
-        flag = "REGISTERED"
+        flag = "User not registered"
+        result = None
         # status should be active as well
         # 1. if status = pending, throw appropriate error
         # 2. if status = active, works
         if data is not None and len(data) > 0:
-            sql = "select * from ebdb.users where email=%s and password=%s and status='ACTIVE'"
-            res2, data2 = data_adaptor.run_q(sql=sql, args=(email, pw), fetch=True)
-            if data2 is not None and len(data2) > 0:
-                result = data2[0]
-            else:
-                result = None
-                flag = "NOT_ACTIVATED"
-        else:
-            result = None
-            flag = "NOT_REGISTERED"
+        #     sql = "select first_name, last_name, email, status, id from ebdb.users where email=%s and password=%s and status='ACTIVE'"
+        #     res2, data2 = data_adaptor.run_q(sql=sql, args=(email, pw), fetch=True)
+        #     if data2 is not None and len(data2) > 0:
+        #         result = data2[0]
+        #     else:
+        #         result = None
+        #         flag = "NOT_ACTIVATED"
+        # else:
+        #     result = None
+        #     flag = "NOT_REGISTERED"
+            if data[0]['status'] == "PENDING":
+                flag = "Please use the link of your email to activate account"
+            elif data[0]['status'] == "DELETED":
+                flag = "User account deleted."
+            elif data[0]['status'] == "SUSPENDED":
+                flag = "User account suspended."
+            elif data[0]['status'] == "ACTIVE":
+                flag = "ACTIVE"
+                result = data[0]
 
         return result, flag
 
@@ -104,10 +114,21 @@ class UsersRDB(BaseDataObject):
 
     @classmethod
     def delete_user(cls, email):
+        # try:
+        #     sql = "delete from ebdb.users where email=%s"
+        #     data_adaptor.run_q(sql=sql, args=(email), fetch=False)
+        #     return "User deleted successfully"
+        # except Exception as e:
+        #     print(e)
+        #     return None
         try:
-            sql = "delete from ebdb.users where email=%s"
-            data_adaptor.run_q(sql=sql, args=(email), fetch=False)
-            return "User deleted successfully"
+            template = {
+                "email": email
+            }
+            data = {"status":"DELETED"}
+            sql, args = data_adaptor.create_update("ebdb.users", data, template) 
+            data_adaptor.run_q(sql=sql, args=args, fetch=True)
+            return "Resource updated successfully"
         except Exception as e:
             print(e)
             return None

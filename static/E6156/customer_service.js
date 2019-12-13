@@ -17,8 +17,8 @@
             // This is also not a good way to do this anymore.
             var sStorage = $window.sessionStorage;
 
-            // var customer_service_base_url = "http://127.0.0.1:5031/api"
-            var customer_service_base_url = "http://tse6156.xbpsufqtgm.us-east-1.elasticbeanstalk.com/api"
+            var customer_service_base_url = "http://127.0.0.1:5000/api"
+            // var customer_service_base_url = "http://tse6156.xbpsufqtgm.us-east-1.elasticbeanstalk.com/api"
 
             return {
                 get_version: function () {
@@ -46,34 +46,43 @@
                                 var auth = h.authorization;
                                 sStorage.setItem("token", auth);
                                 resolve("OK")
+                                $('#loginModal').modal('hide');
                             }).error(function (error) {
-                                console.log("Error = " + JSON.stringify(error, null, 4));
+                                var error_msg = JSON.stringify(error);
+                                console.log("Error = " + error_msg);
+                                // $('#ErrorMessageLogin').innerHTML = "ERROR";
+                                // $scope.ErrorMessageLoginText = 'test'
+                                alert(error_msg);
                                 reject("Error")
                             });
                     });
                 },
-                checkLogin: function () {
+                checkLogin: function ($scope) {
 
                     return new Promise(function(resolve, reject) {
                         console.log("Check login.")
                         var url = customer_service_base_url + "/user";
                         
-                        let headers = new HttpHeaders({
+                        let headers1 = {
                             'Content-Type': 'application/json',
-                            'authorization': sStorage.getItem("token") });
-                        let options = { headers: headers };
+                            'authorization': sStorage.getItem("token") };
+                        let options = { headers: headers1 };
 
                         $http.post(url, null, options).success(
                             function (data, status, headers) {
                                 var rsp = data;
                                 var h = headers();
-                                var result = data.data;
+                                var result = data;
+                                console.log(result);
+                                $scope.lemail = result.email;
+                                // console.log(result.email);
+                                // console.log($scope.lemail);
                                 console.log("Data = " + JSON.stringify(result, null, 4));
                                 console.log("Headers = " + JSON.stringify(h, null, 4))
                                 console.log("RSP = " + JSON.stringify(rsp, null, 4))
 
-                                var auth = h.authorization;
-                                sStorage.setItem("token", auth);
+                                // var auth = h.authorization;
+                                // sStorage.setItem("token", auth);
                                 resolve("OK")
                             }).error(function (error) {
                                 console.log("Error = " + JSON.stringify(error, null, 4));
