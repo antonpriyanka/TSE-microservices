@@ -20,6 +20,7 @@ class SimpleMiddleWare(object):
 
     def __call__(self, environ, start_response):
         print("\n\nSimpleMiddlewareObject: something you want done in every http request")
+        print (environ)
 
         if '/api/verifyuser/' in environ['REQUEST_URI'] and environ['REQUEST_METHOD'] == 'PUT':
             source = environ['HTTP_AUTHORIZATION']
