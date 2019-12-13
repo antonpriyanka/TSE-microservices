@@ -123,7 +123,6 @@ class ProfileService(BaseService):
 
     @classmethod
     def get_profile_by_customer_id(cls, uuid):
-
         result = ProfileRDB.get_profile_by_customer_id(uuid)
         return result
 

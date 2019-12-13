@@ -135,7 +135,6 @@ class ProfileRDB(BaseDataObject):
 
     @classmethod
     def get_profile_by_customer_id(cls, uuid):
-        print('uuid 2 is ', uuid)
         sql = "select * from ebdb.profile where user_id=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(uuid), fetch=True)
         if data is not None and len(data) > 0:
@@ -173,10 +172,9 @@ class ProfileRDB(BaseDataObject):
     def get_profile_by_params_and_fields(cls, params=None, fields=None):
 
         sql, args = data_adaptor.create_select("ebdb.profile", params, fields)
-
         res, data = data_adaptor.run_q(sql=sql, args=args, fetch=True)
         if data is not None and len(data) > 0:
-            result =  data[0]
+            result = data
         else:
             result = None
 
@@ -186,14 +184,13 @@ class ProfileRDB(BaseDataObject):
     def create_profile(cls, profile_info):
 
         result = None
-
         try:
             sql, args = data_adaptor.create_insert(table_name="profile", row=profile_info)
             res, data = data_adaptor.run_q(sql, args)
             if res != 1:
                 result = None
             else:
-                result = profile_info['id']
+                result = profile_info['user_id']
         except pymysql.err.IntegrityError as ie:
             if ie.args[0] == 1062:
                 raise (DataException(DataException.duplicate_key))
