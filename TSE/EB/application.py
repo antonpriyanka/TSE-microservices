@@ -18,8 +18,8 @@ from Context.Context import Context
 import Middleware.notification as notification
 from Middleware.middleware import *
 from Middleware.utils import *
-from Address.Address import *
-from Address import *
+# from Address.Address import *
+# from Address import *
 
 # Setup and use the simple, common Python logging framework. Send log messages to the console.
 # The application should get the log level out of the context. We will change later.
@@ -261,7 +261,8 @@ def user_email(email):
             rsp['headers'] = {
                 "Etag": str(server_etag),
                 "authorization": str(create_authorization_token(email)),
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*', 
+                "Access-Control-Allow-Headers": 'authorization, Etag'
             }
 
         elif inputs["method"] == "PUT":
@@ -344,7 +345,8 @@ def check_user_login():
                     del rsp_data['created_on']
                 rsp_data['headers'] = {
                     "authorization": str(create_authorization_token(email)), 
-                    'Access-Control-Allow-Origin':'*'
+                    'Access-Control-Allow-Origin':'*', 
+                    "Access-Control-Allow-Headers": 'authorization'
                 }
             if rsp_data is None:
                 return Response("Resource not found", status=404, content_type="text/plain")
@@ -389,6 +391,8 @@ def user_register():
             response_headers["authorization"] = str(create_authorization_token(inputs['body']['email'])),
             response_headers["Access-Control-Allow-Origin"] = '*'
             response_headers["Access-Control-Expose-Headers"] = "authorization"
+            # response_headers["Access-Control-Allow-Headers"] = "authorization,Access-Control-Allow-Origin"
+
 
             rsp_status = 200
             rsp_txt = "OK"
@@ -570,24 +574,24 @@ def user_resource():
     return full_rsp
 
 
-@application.route("/addresses/<address_id>", methods=["GET"])
-def address_get(address_id):
-    print("getting address by id")
-    rsp_txt = "Getting by dynamoDB."
-    full_address = AddressService.get_address(address_id)
-    print(full_address['Item'])
-    full_rsp = Response(json.dumps(full_address['Item']), status=200, content_type="application/json")
-    return full_rsp
+# @application.route("/addresses/<address_id>", methods=["GET"])
+# def address_get(address_id):
+#     print("getting address by id")
+#     rsp_txt = "Getting by dynamoDB."
+#     full_address = AddressService.get_address(address_id)
+#     print(full_address['Item'])
+#     full_rsp = Response(json.dumps(full_address['Item']), status=200, content_type="application/json")
+#     return full_rsp
 
 
-@application.route("/addresses", methods=["POST"])
-def address_put():
-    res = request.json
-    print("Querying smartysheets")
-    rsp_txt = "Querying smarty sheets"
-    AddressService.put_address(res)
-    full_rsp = Response(rsp_txt, status=200, content_type="text/plain")
-    return full_rsp
+# @application.route("/addresses", methods=["POST"])
+# def address_put():
+#     res = request.json
+#     print("Querying smartysheets")
+#     rsp_txt = "Querying smarty sheets"
+#     AddressService.put_address(res)
+#     full_rsp = Response(rsp_txt, status=200, content_type="text/plain")
+#     return full_rsp
 
 
 @application.route("/api/profile", methods=["POST", "GET"])
@@ -704,7 +708,8 @@ def user_profile(customer_id):
 
             rsp['headers'] = {
                 "Etag": str(server_etag),
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*', 
+                "Access-Control-Allow-Headers": 'Etag'
             }
 
         elif inputs["method"] == "PUT":
