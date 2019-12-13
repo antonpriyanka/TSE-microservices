@@ -65,7 +65,7 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
         // if session storage auth token is undefined, return
         // else call an API to get the original email for it
 
-        CustomerService.checkLogin().then(function (result) {
+        CustomerService.checkLogin($scope).then(function (result) {
             console.log("Resolved!")
             $scope.loginRegisterResult = true;
             console.log($scope.lemail);

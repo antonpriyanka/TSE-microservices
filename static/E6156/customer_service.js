@@ -57,7 +57,7 @@
                             });
                     });
                 },
-                checkLogin: function () {
+                checkLogin: function ($scope) {
 
                     return new Promise(function(resolve, reject) {
                         console.log("Check login.")
@@ -72,14 +72,17 @@
                             function (data, status, headers) {
                                 var rsp = data;
                                 var h = headers();
-                                var result = data.data;
+                                var result = data;
+                                console.log(result);
                                 $scope.lemail = result.email;
+                                // console.log(result.email);
+                                // console.log($scope.lemail);
                                 console.log("Data = " + JSON.stringify(result, null, 4));
                                 console.log("Headers = " + JSON.stringify(h, null, 4))
                                 console.log("RSP = " + JSON.stringify(rsp, null, 4))
 
-                                var auth = h.authorization;
-                                sStorage.setItem("token", auth);
+                                // var auth = h.authorization;
+                                // sStorage.setItem("token", auth);
                                 resolve("OK")
                             }).error(function (error) {
                                 console.log("Error = " + JSON.stringify(error, null, 4));
