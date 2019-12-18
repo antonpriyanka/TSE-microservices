@@ -697,7 +697,8 @@ def user_profile(customer_id):
         if rsp is None:
             return Response("Resource not found", status=404, content_type="text/plain")
 
-        server_etag = hash(frozenset(rsp.items()))
+        # server_etag = hash(frozenset(rsp.items()))
+        server_etag = generate_hash(rsp)
 
         if inputs["method"] == "GET":
             # rsp = user_service.get_by_email(email)
@@ -889,7 +890,8 @@ def user_profile_get(customer_id):
         if rsp is None:
             return Response("Resource not found", status=404, content_type="text/plain")
 
-        server_etag = hash(frozenset(rsp.items()))
+        # server_etag = hash(frozenset(rsp.items()))
+        server_etag = generate_hash(rsp)
 
         if inputs["method"] == "GET":
             # rsp = user_service.get_by_email(email)
