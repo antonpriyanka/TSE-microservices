@@ -5,6 +5,7 @@
 # - requests enables accessing the elements of an incoming HTTP/REST request.
 #
 from flask import Flask, Response, request
+import requests
 
 from flask_cors import CORS
 
@@ -21,8 +22,8 @@ from Context.Context import Context
 import Middleware.notification as notification
 from Middleware.middleware import *
 from Middleware.utils import *
-from Address.Address import *
-from Address import *
+# from Address.Address import *
+# from Address import *
 
 # Setup and use the simple, common Python logging framework. Send log messages to the console.
 # The application should get the log level out of the context. We will change later.
@@ -264,7 +265,8 @@ def user_email(email):
             rsp['headers'] = {
                 "Etag": str(server_etag),
                 "authorization": str(create_authorization_token(email)),
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*', 
+                "Access-Control-Allow-Headers": 'authorization, Etag'
             }
 
         elif inputs["method"] == "PUT":
@@ -332,7 +334,8 @@ def check_user_login():
     print('\n\nAPI User check login inputs\n\n')
     print(inputs)
 
-    try:
+    # try:
+    if 1:
         user_service = _get_user_service()
         logger.error("/api/user: _user_service = " + str(user_service))
 
@@ -364,19 +367,20 @@ def check_user_login():
                     del rsp_data['created_on']
                 rsp_data['headers'] = {
                     "authorization": str(create_authorization_token(email)), 
-                    'Access-Control-Allow-Origin':'*'
+                    'Access-Control-Allow-Origin':'*', 
+                    "Access-Control-Allow-Headers": 'authorization'
                 }
             if rsp_data is None:
                 return Response("Resource not found", status=404, content_type="text/plain")
             else:
                 full_rsp = Response(json.dumps(rsp_data), status=200, content_type="application/json")
 
-    except Exception as e:
-        log_msg = "/email: Exception = " + str(e)
-        logger.error(log_msg)
-        rsp_status = 500
-        rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
-        full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
+    # except Exception as e:
+    #     log_msg = "/email: Exception = " + str(e)
+    #     logger.error(log_msg)
+    #     rsp_status = 500
+    #     rsp_txt = "INTERNAL SERVER ERROR. Please take COMSE6156 -- Cloud Native Applications."
+    #     full_rsp = Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
     log_response("/email", rsp_status, rsp_data, rsp_txt)
 
@@ -409,6 +413,8 @@ def user_register():
             response_headers["authorization"] = str(create_authorization_token(inputs['body']['email'])),
             response_headers["Access-Control-Allow-Origin"] = '*'
             response_headers["Access-Control-Expose-Headers"] = "authorization"
+            # response_headers["Access-Control-Allow-Headers"] = "authorization,Access-Control-Allow-Origin"
+
 
             rsp_status = 200
             rsp_txt = "OK"
@@ -590,24 +596,24 @@ def user_resource():
     return full_rsp
 
 
-@application.route("/addresses/<address_id>", methods=["GET"])
-def address_get(address_id):
-    print("getting address by id")
-    rsp_txt = "Getting by dynamoDB."
-    full_address = AddressService.get_address(address_id)
-    print(full_address['Item'])
-    full_rsp = Response(json.dumps(full_address['Item']), status=200, content_type="application/json")
-    return full_rsp
+# @application.route("/addresses/<address_id>", methods=["GET"])
+# def address_get(address_id):
+#     print("getting address by id")
+#     rsp_txt = "Getting by dynamoDB."
+#     full_address = AddressService.get_address(address_id)
+#     print(full_address['Item'])
+#     full_rsp = Response(json.dumps(full_address['Item']), status=200, content_type="application/json")
+#     return full_rsp
 
 
-@application.route("/addresses", methods=["POST"])
-def address_put():
-    res = request.json
-    print("Querying smartysheets")
-    rsp_txt = "Querying smarty sheets"
-    AddressService.put_address(res)
-    full_rsp = Response(rsp_txt, status=200, content_type="text/plain")
-    return full_rsp
+# @application.route("/addresses", methods=["POST"])
+# def address_put():
+#     res = request.json
+#     print("Querying smartysheets")
+#     rsp_txt = "Querying smarty sheets"
+#     AddressService.put_address(res)
+#     full_rsp = Response(rsp_txt, status=200, content_type="text/plain")
+#     return full_rsp
 
 
 @application.route("/api/profile", methods=["POST", "GET"])
@@ -809,7 +815,6 @@ def user_profile(customer_id):
 
         if rsp_1 is None:
             return Response("Resource not found", status=404, content_type="text/plain")
-
         print(rsp_1)
         # rsp_2 = OrderedDict(rsp_1)
         # print(rsp_2)
@@ -817,9 +822,7 @@ def user_profile(customer_id):
         rsp = {}
         rsp['response'] = rsp_1
 
-
-
-        # server_etag = hash(frozenset(rsp.items()))
+        server_etag = generate_hash(rsp_1)
 
         if inputs["method"] == "GET":
             # rsp = user_service.get_by_email(email)
@@ -830,7 +833,8 @@ def user_profile(customer_id):
 
             rsp['headers'] = {
                 "Etag": str(server_etag),
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*', 
+                "Access-Control-Allow-Headers": 'Etag'
             }
 
         elif inputs["method"] == "PUT":
@@ -1086,7 +1090,8 @@ def user_profile_get(customer_id):
         if rsp is None:
             return Response("Resource not found", status=404, content_type="text/plain")
 
-        server_etag = hash(frozenset(rsp.items()))
+        # server_etag = hash(frozenset(rsp.items()))
+        server_etag = generate_hash(rsp)
 
         if inputs["method"] == "GET":
             # rsp = user_service.get_by_email(email)

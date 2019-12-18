@@ -121,7 +121,6 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
         data['user_id'] = sStorage.getItem("cust_id");
         // make a get call with cust it to see if user exists
         CustomerService.getProfileData($scope, data['user_id']).then(function (result) {
-            alert("Here1");
             console.log(result);
             // sStorage.setItem("profile_etag", result['headers']['Etag']);
             CustomerService.doUpdateProfile($scope, data, data['user_id']).then(function (result) {

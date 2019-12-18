@@ -85,7 +85,7 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
                     sStorage.setItem("cust_id", c['id']);
                     // $scope.etag = c['headers']['Etag']
                     sStorage.setItem("personal_etag", c['headers']['Etag']);
-                    console.log('Cust ID' + $scope.cId);
+                    console.log('Cust ID ' + sStorage.getItem("cust_id"));
                     $scope.$apply();
                 })
                 .catch(function(error) {

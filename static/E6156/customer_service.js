@@ -95,6 +95,7 @@
                         }
                         let options = { headers: headers1 };
 
+                        console.log("Before checkLogin REST");
                         $http.post(url, null, options).success(
                             function (data, status, headers) {
                                 var rsp = data;
@@ -148,7 +149,11 @@
                                 sStorage.setItem("token", auth);
                                 resolve("OK")
                             }).error(function (error) {
-                                console.log("Error = " + JSON.stringify(error, null, 4));
+                                var error_msg = JSON.stringify(error);
+                                console.log("Error = " + error_msg);
+                                // $('#ErrorMessageLogin').innerHTML = "ERROR";
+                                // $scope.ErrorMessageLoginText = 'test'
+                                alert(error_msg);
                                 reject("Error")
                             });
                     });
@@ -200,7 +205,7 @@
                             }).error(function (error) {
                                 var error_msg = JSON.stringify(error);
                                 console.log("Error = " + error_msg);
-                                alert(error_msg);
+                                // alert(error_msg);
                                 reject("Error")
                             });
                     });
@@ -256,7 +261,7 @@
                             }).error(function (error) {
                                 var error_msg = JSON.stringify(error);
                                 console.log("Error = " + error_msg);
-                                alert(error_msg);
+                                // alert(error_msg);
                                 reject("Error")
                             });
                     });
@@ -313,7 +318,7 @@
                             }).error(function (error) {
                                 var error_msg = JSON.stringify(error);
                                 console.log("Error = " + error_msg);
-                                alert(error_msg);
+                                // alert(error_msg);
                                 // reject(error_msg)
                                 reject(404);
                             });
