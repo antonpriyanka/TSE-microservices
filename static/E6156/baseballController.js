@@ -52,7 +52,8 @@ CustomerApp.controller("baseballController", function($scope, $http, $location, 
     $scope.haveNext = false;
 
     // var urlBase = "http://127.0.0.1:5000";
-    var customer_service_base_url = "https://rpdp3zsx2m.execute-api.us-east-1.amazonaws.com/live";
+    // var customer_service_base_url = "https://rpdp3zsx2m.execute-api.us-east-1.amazonaws.com/live";
+    var urlBase = "https://rpdp3zsx2m.execute-api.us-east-1.amazonaws.com/live/api";
 
     $scope.input = {}
 

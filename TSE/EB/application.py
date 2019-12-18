@@ -349,7 +349,7 @@ def check_user_login():
                     "Access-Control-Allow-Headers": 'authorization'
                 }
             if rsp_data is None:
-                return Response("Resource not found", status=404, content_type="text/plain")
+                return Response(None, status=404, content_type="application/json")
             else:
                 full_rsp = Response(json.dumps(rsp_data), status=200, content_type="application/json")
 
