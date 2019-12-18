@@ -1,5 +1,5 @@
 
-<div class="container" ng-show="loginRegisterResult" ng-app="CustomerApp" ng-controller="profileController">
+<div class="container" ng-show="loginRegisterResult" ng-app="CustomerApp" ng-controller="profileController" data-ng-init="getProfileData()">
     <div style="height: 40px;"></div>
 <!-- 
             <form>
@@ -28,7 +28,7 @@
               <h4>Home</h4>
               <div class="form-group">
                 <label for="exampleInputFirstname">Address</label>
-                <input ng-model="homeAddressUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter new address">
+                <input ng-model="homeAddressUpdate" type="text" class="form-control" id="homeAddress"  aria-describedby="emailHelp" placeholder="Enter new address">
               </div>
               <div class="form-group">
                 <label for="exampleInputLastname">Phone</label>
@@ -43,7 +43,7 @@
               <h4> Office </h4>
               <div class="form-group">
                 <label for="exampleInputFirstname">Address</label>
-                <input ng-model="officeAddressUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter new address">
+                <input ng-model="officeAddressUpdate" type="text" class="form-control" id="officeAddress"  aria-describedby="emailHelp" placeholder="Enter new address">
               </div>
               <div class="form-group">
                 <label for="exampleInputLastname">Phone</label>
@@ -58,7 +58,7 @@
               <h4> Other </h4>
               <div class="form-group">
                 <label for="exampleInputFirstname">Address</label>
-                <input ng-model="otherAddressUpdate" type="text" class="form-control" id="exampleInputFirstname"  aria-describedby="emailHelp" placeholder="Enter new address">
+                <input ng-model="otherAddressUpdate" type="text" class="form-control" id="otherAddress"  aria-describedby="emailHelp" placeholder="Enter new address">
               </div>
               <div class="form-group">
                 <label for="exampleInputLastname">Phone</label>

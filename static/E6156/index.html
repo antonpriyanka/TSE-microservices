@@ -20,6 +20,7 @@
     <script src="./angular.min.js"></script>
     <script src="./angular-route.min.js"></script>
     <script src="app_module.js"></script>
+    <script src="index.js"></script>
 
     <!-- DFF -->
     <script src="./homeController.js"></script>
@@ -74,6 +75,15 @@
             </div>
           </div>
           <div class="modal-footer">
+            <div onclick="login_using_fb_google();">
+                <img src="./images/fb.png" style="width:40%;"><br>
+                <span>Log In with Facebook</span>
+              </div>
+              
+              <div onclick="login_using_fb_google();">
+                <img src="./images/google.png" style="width:40%;"><br>
+                <span>Log In with Google</span>
+              </div>
             <!-- <div id= "ErrorMessageLogin" ng-model="ErrorMessageLoginText">This is some text!</div>   -->
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             <button  ng-show="loginOK()&&(!loginRegisterResult)" type="button" class="btn btn-default btn-primary" ng-click="driveLogin()">Login or Register</button>
@@ -92,27 +102,27 @@
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ml-auto">
             <li id="home" ng-click="navMenu('home')" ng-class="getNavClass('home')">
-              <a class="nav-link" href="#">Home
+              <a class="nav-link" href="#!/">Home
                 <span class="sr-only">(current)</span>
               </a>
             </li>
             <li ng-click="navMenu('about')" ng-class="getNavClass('about')">
-              <a class="nav-link" href="#">About</a>
+              <a class="nav-link" href="#!/">About</a>
             </li>
             <li ng-click="navMenu('Baseball')" ng-class="getNavClass('baseball')">
               <a class="nav-link" href="#!/baseball">Baseball</a>
             </li>
             <li ng-click="navMenu('services')" ng-class="getNavClass('services')">
-              <a class="nav-link" href="#">Services</a>
+              <a class="nav-link" href="#!/">Services</a>
             </li>
             <li ng-click="navMenu('contact')" ng-class="getNavClass('contact')"">
-              <a class="nav-link" href="#">Contact</a>
+              <a class="nav-link" href="#!/">Contact</a>
             </li>
             <li ng-click="navMenu('login')" ng-class="getNavClass('login')" ng-show="!loginRegisterResult">
               <a class="nav-link" ng-click="doLogin()">Login</a>
             </li>
             <li ng-click="navMenu('logout')" ng-class="getNavClass('logout')" ng-show="loginRegisterResult">
-              <a class="nav-link" ng-click="doLogout()">Logout</a>
+              <a class="nav-link" ng-click="doLogout()" href="#!/">Logout</a>
             </li>
             <li ng-click="navMenu('profile')" ng-class="getNavClass('profile')" ng-show="loginRegisterResult">
               <a class="nav-link" href="#!/profile">My Profile/My Account</a>
@@ -134,7 +144,7 @@
 
     <!-- Bootstrap core JavaScript -->
     <script src="./jquery.min.js"></script>
-    <script src="//d79i1fxsrar4t.cloudfront.net/jquery.liveaddress/5.1/jquery.liveaddress.min.js"></script>
+    <script src="https://d79i1fxsrar4t.cloudfront.net/jquery.liveaddress/5.1/jquery.liveaddress.min.js"></script>
 
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 

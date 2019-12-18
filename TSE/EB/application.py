@@ -11,6 +11,9 @@ from flask_cors import CORS
 from datetime import datetime
 import json
 import jwt
+import time
+from collections import OrderedDict
+import base64
 
 from CustomerInfo.Users import UsersService as UserService, ProfileService
 from Context.Context import Context
@@ -270,7 +273,7 @@ def user_email(email):
                 rsp_status = 403
                 rsp_txt = "Forbidden. Not authorized"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")'''
-            if user_etag is None:
+            if user_etag == 'None':
                 rsp_status = 403
                 rsp_txt = "Forbidden. Please provide conditional headers"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
@@ -325,6 +328,8 @@ def check_user_login():
     rsp_data = None
     rsp_status = None
     rsp_txt = None
+
+    print('\n\nAPI User check login inputs\n\n')
     print(inputs)
 
     try:
@@ -335,7 +340,22 @@ def check_user_login():
             # rsp = user_service.get_by_email(email)
             print(inputs)
             if "Authorization" in inputs["headers"] and inputs["headers"]["Authorization"]:
-                email = decode_token(inputs["headers"]["Authorization"])["source"]
+                email = decode_token(inputs["headers"]["Authorization"])
+
+                rsp = user_service.get_by_email(email["source"])
+                if rsp is None:
+                    if "email" in email:
+                        if "given_name" in email: # FB/Google login
+                            # push to DB
+                            data = {}
+                            data["first_name"] = email["given_name"]
+                            data["last_name"] = ""
+                            data["email"] = email["source"]
+                            data["password"] = ""
+                            data["status"] = "ACTIVE"
+                            result = user_service.create_user(data)
+
+                email = email["source"]
                 rsp_data = user_service.get_by_email(email)
                 print('fwefw', rsp_data)
                 if "created_on" in rsp_data:
@@ -632,15 +652,113 @@ def profile():
         elif inputs['method'] == 'POST':
             # Implemented address verification
             data = inputs['body']
-            headers = {"Content-type": "application/json", "Accept": "text/plain"}
-            r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
-                              data=json.dumps({"street": data['value']}), headers=headers)
-            address_check = r.json()
-            if address_check['body']['status'] == 'success':
-                data['value'] = address_check['body']['barcode']
-                rsp = profile_service.create_profile(data)
-            else:
-                return Response("Kindly enter a valid address", status=rsp_status, content_type="text/plain")
+            # parse the data and process it here
+
+            rsp_txt = ""
+            for key in data.keys():
+                if key == 'Home':
+                    # first check if there is an address post being made
+                    if 'Address' in data['Home']:
+                        headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                        r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                              data=json.dumps({"street": data['Home']['Address']}), headers=headers)
+                        address_check = r.json()     
+                        if address_check['body']['status'] == 'success':
+                            req_data = {}
+                            req_data['user_id'] = data['user_id']
+                            req_data['type'] = 'Address'
+                            req_data['subtype'] = 'Home'
+                            req_data['value'] = address_check['body']['barcode']
+                            rsp = profile_service.create_profile(req_data)                           
+                        else:
+                            rsp_txt += "Kindly enter a valid value for Home address! "
+                            continue
+                    if 'Phone' in data['Home']:
+                        req_data = {}
+                        req_data['user_id'] = data['user_id']
+                        req_data['type'] = 'Telephone'
+                        req_data['subtype'] = 'Home'
+                        req_data['value'] = data['Home']['Phone']
+                        rsp = profile_service.create_profile(req_data)       
+                    if 'Email' in data['Home']:
+                        req_data = {}
+                        req_data['user_id'] = data['user_id']
+                        req_data['type'] = 'Email'
+                        req_data['subtype'] = 'Home'
+                        req_data['value'] = data['Home']['Email']
+                        rsp = profile_service.create_profile(req_data)  
+
+                elif key == 'Office':
+                    if 'Address' in data['Office']:
+                        headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                        r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                              data=json.dumps({"street": data['Office']['Address']}), headers=headers)
+                        address_check = r.json()     
+                        if address_check['body']['status'] == 'success':
+                            req_data = {}
+                            req_data['user_id'] = data['user_id']
+                            req_data['type'] = 'Address'
+                            req_data['subtype'] = 'Work'
+                            req_data['value'] = address_check['body']['barcode']
+                            rsp = profile_service.create_profile(req_data)                           
+                        else:
+                            rsp_txt += "Kindly enter a valid value for Work address! "
+                            continue
+                    if 'Phone' in data['Office']:
+                        req_data = {}
+                        req_data['user_id'] = data['user_id']
+                        req_data['type'] = 'Telephone'
+                        req_data['subtype'] = 'Work'
+                        req_data['value'] = data['Office']['Phone']
+                        rsp = profile_service.create_profile(req_data)       
+                    if 'Email' in data['Office']:
+                        req_data = {}
+                        req_data['user_id'] = data['user_id']
+                        req_data['type'] = 'Email'
+                        req_data['subtype'] = 'Work'
+                        req_data['value'] = data['Office']['Email']
+                        rsp = profile_service.create_profile(req_data)  
+
+                elif key == 'Other':
+                    if 'Address' in data['Other']:
+                        headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                        r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                              data=json.dumps({"street": data['Other']['Address']}), headers=headers)
+                        address_check = r.json()     
+                        if address_check['body']['status'] == 'success':
+                            req_data = {}
+                            req_data['user_id'] = data['user_id']
+                            req_data['type'] = 'Address'
+                            req_data['subtype'] = 'Other'
+                            req_data['value'] = address_check['body']['barcode']
+                            rsp = profile_service.create_profile(req_data)                           
+                        else:
+                            rsp_txt += "Kindly enter a valid value for Other address! "
+                            continue
+                    if 'Phone' in data['Other']:
+                        req_data = {}
+                        req_data['user_id'] = data['user_id']
+                        req_data['type'] = 'Telephone'
+                        req_data['subtype'] = 'Other'
+                        req_data['value'] = data['Other']['Phone']
+                        rsp = profile_service.create_profile(req_data)       
+                    if 'Email' in data['Other']:
+                        req_data = {}
+                        req_data['user_id'] = data['user_id']
+                        req_data['type'] = 'Email'
+                        req_data['subtype'] = 'Other'
+                        req_data['value'] = data['Other']['Email']
+                        rsp = profile_service.create_profile(req_data)
+            
+            # headers = {"Content-type": "application/json", "Accept": "text/plain"}
+            # r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+            #                   data=json.dumps({"street": data['value']}), headers=headers)
+            # address_check = r.json()
+            # if address_check['body']['status'] == 'success':
+            #     data['value'] = address_check['body']['barcode']
+            #     rsp = profile_service.create_profile(data)
+            # else:
+            #     return Response("Kindly enter a valid address", status=rsp_status, content_type="text/plain")
 
         if rsp is not None:
             rsp_data = rsp
@@ -687,13 +805,21 @@ def user_profile(customer_id):
         profile_service = _get_profile_service()
         logger.error("/api/profile/<customer_id>: _user_service = " + str(user_service))
 
-        rsp = profile_service.get_profile_by_customer_id(customer_id)  # todo - implemented data object
-        user_profile_email = user_service.get_resource_by_primary_key(customer_id)["email"]
+        rsp_1 = profile_service.get_profile_by_customer_id(customer_id)  # todo - implemented data object
 
-        if rsp is None:
+        if rsp_1 is None:
             return Response("Resource not found", status=404, content_type="text/plain")
 
-        server_etag = hash(frozenset(rsp.items()))
+        print(rsp_1)
+        # rsp_2 = OrderedDict(rsp_1)
+        # print(rsp_2)
+        ###### here
+        rsp = {}
+        rsp['response'] = rsp_1
+
+
+
+        # server_etag = hash(frozenset(rsp.items()))
 
         if inputs["method"] == "GET":
             # rsp = user_service.get_by_email(email)
@@ -708,30 +834,106 @@ def user_profile(customer_id):
             }
 
         elif inputs["method"] == "PUT":
-            source = inputs['headers']['authorization']
-
+            print(inputs)
+            source = inputs['headers']['Authorization']
+            # print(source)
+            user_profile_email = user_service.get_resource_by_primary_key(customer_id)["email"]
             if not is_user_authorized_to_put(source, user_profile_email):
                 rsp_status = 403
                 rsp_txt = "Forbidden. Not authorized"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
-            if user_etag is None:
-                rsp_status = 403
-                rsp_txt = "Forbidden. Please provide conditional headers"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+            # if user_etag == 'None':
+            #     rsp_status = 403
+            #     rsp_txt = "Forbidden. Please provide conditional headers"
+            #     return Response(rsp_txt, status=rsp_status, content_type="text/plain")
 
             if str(server_etag) == user_etag:
                 # Implemented address verification
                 data = inputs['body']
-                headers = {"Content-type": "application/json", "Accept": "text/plain"}
-                r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
-                                  data=json.dumps({"street": data['value']}), headers=headers)
-                address_check = r.json()
-                if address_check['body']['status'] == 'success':
-                    data['value'] = address_check['body']['barcode']
-                    rsp = profile_service.update_profile(data['id'], data)
-                else:
-                    return Response("Kindly enter a valid address", status=rsp_status, content_type="text/plain")
+                # parse the data and process it here
+
+                rsp_txt = ""
+                for key in data.keys():
+                    if key == 'Home':
+                        # first check if there is an address post being made
+                        if 'Address' in data['Home']:
+                            headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                            r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                                  data=json.dumps({"street": data['Home']['Address']}), headers=headers)
+                            address_check = r.json()     
+                            if address_check['body']['status'] == 'success':
+                                req_data = {}
+                                req_data['value'] = address_check['body']['barcode']
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Address')                           
+                            else:
+                                rsp_txt += "Kindly enter a valid value for Home address! "
+                                continue
+                        if 'Phone' in data['Home']:
+                            req_data = {}
+                            req_data['value'] = data['Home']['Phone']
+                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Telephone')       
+                        if 'Email' in data['Home']:
+                            req_data = {}
+                            req_data['value'] = data['Home']['Email']
+                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Email')  
+
+                    elif key == 'Office':
+                        if 'Address' in data['Office']:
+                            headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                            r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                                  data=json.dumps({"street": data['Office']['Address']}), headers=headers)
+                            address_check = r.json()     
+                            if address_check['body']['status'] == 'success':
+                                req_data = {}
+                                req_data['value'] = address_check['body']['barcode']
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Address')                           
+                            else:
+                                rsp_txt += "Kindly enter a valid value for Work address! "
+                                continue
+                        if 'Phone' in data['Office']:
+                            req_data = {}
+                            req_data['value'] = data['Office']['Phone']
+                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Telephone')       
+                        if 'Email' in data['Office']:
+                            req_data = {}
+                            req_data['value'] = data['Office']['Email']
+                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Email')  
+
+                    elif key == 'Other':
+                        if 'Address' in data['Other']:
+                            headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                            r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                                  data=json.dumps({"street": data['Other']['Address']}), headers=headers)
+                            address_check = r.json()     
+                            if address_check['body']['status'] == 'success':
+                                req_data = {}
+                                req_data['value'] = address_check['body']['barcode']
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Address')                           
+                            else:
+                                rsp_txt += "Kindly enter a valid value for Other address! "
+                                continue
+                        if 'Phone' in data['Other']:
+                            req_data = {}
+                            req_data['value'] = data['Other']['Phone']
+                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Telephone')       
+                        if 'Email' in data['Other']:
+                            req_data = {}
+                            req_data['value'] = data['Other']['Email']
+                            rsp = profile_service.update_profile(req_data. data['user_id'], 'Other', 'Email')
+
+
+                # parse the data and process it here
+                # data = inputs['body']
+                # headers = {"Content-type": "application/json", "Accept": "text/plain"}
+                # r = requests.post(url="https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address",
+                #                   data=json.dumps({"street": data['value']}), headers=headers)
+                # address_check = r.json()
+                # if address_check['body']['status'] == 'success':
+                #     data['value'] = address_check['body']['barcode']
+                #     rsp = profile_service.update_profile(data['user_id'], data)
+                # else:
+                #     return Response("Kindly enter a valid address", status=rsp_status, content_type="text/plain")
             else:
                 rsp_status = 412
                 rsp_txt = "Preconditional check failed"

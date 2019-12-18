@@ -159,7 +159,7 @@ class ProfileRDB(BaseDataObject):
         sql = "select * from ebdb.profile where user_id=%s"
         res, data = data_adaptor.run_q(sql=sql, args=(uuid), fetch=True)
         if data is not None and len(data) > 0:
-            result =  data[0]
+            result =  data
         else:
             result = None
 
@@ -234,10 +234,12 @@ class ProfileRDB(BaseDataObject):
 
 
     @classmethod
-    def update_profile(cls, uuid, data):
+    def update_profile(cls, data, uuid, stype, maintype):
         try:
             template = {
-                "id": uuid
+                "user_id": uuid,
+                "subtype": stype,
+                "type": maintype
             }
             sql, args = data_adaptor.create_update("ebdb.profile", data, template)
             data_adaptor.run_q(sql=sql, args=args, fetch=True)

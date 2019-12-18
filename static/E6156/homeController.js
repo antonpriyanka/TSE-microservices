@@ -19,6 +19,9 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
     $scope.firstName = null;
 
     $scope.customerInfo = null;
+    $scope.cId = null;
+    $scope.etag = null;
+    $scope.userExistsForProfile = false;
 
     console.log("Controller loaded.");
     console.log("Base URL = " + $location.absUrl());
@@ -56,7 +59,8 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
 
     $scope.doLogout = function() {
         console.log('doing logout');
-        // implement logout
+        $window.sessionStorage.clear();
+        $scope.loginRegisterResult = false;
     }
 
     $scope.checkLoginOnLoad = function() {
@@ -64,16 +68,24 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
 
         // if session storage auth token is undefined, return
         // else call an API to get the original email for it
+        var cur_url = window.location.href.toString();
+        
 
         CustomerService.checkLogin($scope).then(function (result) {
             console.log("Resolved!")
             $scope.loginRegisterResult = true;
-            console.log($scope.lemail);
+            // if(cur_url.includes('profile')) return;
+            console.log('Scope email' + $scope.lemail);
             CustomerService.getCustomer($scope.lemail)
                 .then(function(c) {
                     console.log("checking customerInfo respo");
                     console.log(c);
                     $scope.customerInfo = c;
+                    // $scope.cId = c['id'];
+                    sStorage.setItem("cust_id", c['id']);
+                    // $scope.etag = c['headers']['Etag']
+                    sStorage.setItem("personal_etag", c['headers']['Etag']);
+                    console.log('Cust ID' + $scope.cId);
                     $scope.$apply();
                 })
                 .catch(function(error) {
@@ -98,6 +110,10 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
                         console.log("checking customerInfo respo");
                         console.log(c);
                         $scope.customerInfo = c;
+                        $scope.cId = c['id'];
+                        // $scope.etag = c['headers']['Etag']
+                        sStorage.setItem("personal_etag", c['headers']['Etag']);
+                        console.log('Cust ID' + $scope.cId);
                         $scope.$apply();
                     })
                     .catch(function(error) {

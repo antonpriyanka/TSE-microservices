@@ -161,8 +161,8 @@ class ProfileService(BaseService):
 
     classmethod
 
-    def update_profile(cls, uuid, data):
-        result = ProfileRDB.update_profile(uuid, data)
+    def update_profile(cls, data, uuid, stype, maintype):
+        result = ProfileRDB.update_profile(data, uuid, stype, maintype)
         return result
 
 
