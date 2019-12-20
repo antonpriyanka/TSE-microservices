@@ -412,7 +412,7 @@ def user_register():
             response_headers = dict()
             response_headers["authorization"] = str(create_authorization_token(inputs['body']['email'])),
             response_headers["Access-Control-Allow-Origin"] = '*'
-            response_headers["Access-Control-Expose-Headers"] = "authorization"
+            response_headers["Access-Control-Expose-Headers"] = "authorization,x-amzn-remapped-authorization"
             # response_headers["Access-Control-Allow-Headers"] = "authorization,Access-Control-Allow-Origin"
 
 
