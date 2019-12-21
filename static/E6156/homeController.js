@@ -68,7 +68,6 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
 
         // if session storage auth token is undefined, return
         // else call an API to get the original email for it
-        var cur_url = window.location.href.toString();
         
 
         CustomerService.checkLogin($scope).then(function (result) {
@@ -78,11 +77,16 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
             console.log('Scope email' + $scope.lemail);
             CustomerService.getCustomer($scope.lemail)
                 .then(function(c) {
+                    // CustomerService.g_first_name = c['first_name'];
+                    // CustomerService.g_last_name = c['last_name']l
                     console.log("checking customerInfo respo");
                     console.log(c);
                     $scope.customerInfo = c;
                     // $scope.cId = c['id'];
+                    console.log("cust_id3" + c['id']);
                     sStorage.setItem("cust_id", c['id']);
+                    console.log("cust_idddd " + c['id']);
+                    console.log(sStorage.getItem("cust_id"));
                     // $scope.etag = c['headers']['Etag']
                     sStorage.setItem("personal_etag", c['headers']['Etag']);
                     console.log('Cust ID ' + sStorage.getItem("cust_id"));
@@ -110,10 +114,11 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
                         console.log("checking customerInfo respo");
                         console.log(c);
                         $scope.customerInfo = c;
-                        $scope.cId = c['id'];
+                        // $scope.cId = c['id'];
+                        console.log("cust_idddd " + c['id']);
+                        sStorage.setItem("cust_id", c['id']);
                         // $scope.etag = c['headers']['Etag']
                         sStorage.setItem("personal_etag", c['headers']['Etag']);
-                        console.log('Cust ID' + $scope.cId);
                         $scope.$apply();
                     })
                     .catch(function(error) {

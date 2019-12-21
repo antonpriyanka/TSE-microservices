@@ -5,7 +5,8 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
     console.log("Profile controller loaded.")
 
     var s3 = jQuery.LiveAddress({
-        key: "18981749384552786",
+        // key: "18981749384552786",
+        key: "10836073891956756",
         waitForStreet: true,
         debug: true,
         target: "US",
@@ -61,13 +62,28 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
 
     $scope.getProfileData = function() {
         console.log('getting profile data');
-        setTimeout(() => {  console.log("World!"); }, 2000);
-        let cId = sStorage.getItem("cust_id");
-        CustomerService.getProfileData($scope, cId).then(function (result) {
-            console.log(result);
+        // setTimeout(() => {  console.log("World!"); }, 5000);
+
+        
+
+        CustomerService.checkLogin($scope).then(function() {
+            CustomerService.getCustomer($scope.lemail).then(function() {
+                let cId = sStorage.getItem("cust_id");
+                CustomerService.getProfileData($scope, cId).then(function (result) {
+                    console.log(result);
+                }).
+                catch(function(error) {
+                    console.log("Error in getting profile data");
+                    console.log(error);
+                });
+            }).        
+            catch(function(error) {
+                console.log("Error in getting customer data");
+                console.log(error);
+            });         
         }).
         catch(function(error) {
-            console.log("Error in getting profile data");
+            console.log("Error in checking login");
             console.log(error);
         });
     };

@@ -233,6 +233,7 @@ def user_email(email):
     rsp_data = None
     rsp_status = None
     rsp_txt = None
+    print('\nInputs to user_email\n')
     print(inputs)
     user_etag = None
     server_etag = None
@@ -241,6 +242,7 @@ def user_email(email):
         user_etag = inputs['headers']['Etag']
 
     try:
+    # if 1:
         user_service = _get_user_service()
         logger.error("/email: _user_service = " + str(user_service))
 
@@ -275,16 +277,26 @@ def user_email(email):
                 rsp_status = 403
                 rsp_txt = "Forbidden. Not authorized"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")'''
+            print("Prnted the PUTTTTTTs")
             if user_etag == 'None':
+                print('Forbidden')
                 rsp_status = 403
                 rsp_txt = "Forbidden. Please provide conditional headers"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
             if str(server_etag) == user_etag:
+                print('Will update from backend')
                 rsp = user_service.update_user(email, inputs['body'])
             else:
+                print('Preconditional faileds')
                 rsp_status = 412
                 rsp_txt = "Preconditional check failed"
                 return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+            # rsp['headers'] = {
+            #     "Etag": str(server_etag),
+            #     "authorization": str(create_authorization_token(email)),
+            #     'Access-Control-Allow-Origin': '*', 
+            #     "Access-Control-Allow-Headers": 'authorization, Etag'
+            # }
 
         elif inputs["method"] == "DELETE":
             '''source = inputs['headers']["authorization"] if "authorization" in inputs['headers'] else None
@@ -341,8 +353,9 @@ def check_user_login():
 
         if inputs["method"] == "POST":
             # rsp = user_service.get_by_email(email)
+            print('\nInputs to check_user_login\n')
             print(inputs)
-            if "Authorization" in inputs["headers"] and inputs["headers"]["Authorization"]:
+            if "Authorization" in inputs["headers"] and inputs["headers"]["Authorization"] != "null":
                 email = decode_token(inputs["headers"]["Authorization"])
 
                 rsp = user_service.get_by_email(email["source"])
@@ -413,7 +426,7 @@ def user_register():
             response_headers["authorization"] = str(create_authorization_token(inputs['body']['email'])),
             response_headers["Access-Control-Allow-Origin"] = '*'
             response_headers["Access-Control-Expose-Headers"] = "authorization,x-amzn-remapped-authorization"
-            # response_headers["Access-Control-Allow-Headers"] = "authorization,Access-Control-Allow-Origin"
+            response_headers["Access-Control-Allow-Headers"] = "authorization,Access-Control-Allow-Origin"
 
 
             rsp_status = 200
@@ -926,6 +939,13 @@ def user_profile(customer_id):
                             req_data['value'] = data['Other']['Email']
                             rsp = profile_service.update_profile(req_data. data['user_id'], 'Other', 'Email')
 
+                # if rsp is not None:
+                #     rsp['headers'] = {
+                #         "Etag": str(server_etag),
+                #         'Access-Control-Allow-Origin': '*', 
+                #         "Access-Control-Allow-Headers": 'authorization,Access-Control-Allow-Origin,Etag'
+                #     }
+
 
                 # parse the data and process it here
                 # data = inputs['body']
@@ -939,9 +959,14 @@ def user_profile(customer_id):
                 # else:
                 #     return Response("Kindly enter a valid address", status=rsp_status, content_type="text/plain")
             else:
+                rsp['headers'] = {
+                    "Etag": str(server_etag),
+                    'Access-Control-Allow-Origin': '*', 
+                    "Access-Control-Allow-Headers": 'Etag'
+                }
                 rsp_status = 412
                 rsp_txt = "Preconditional check failed"
-                return Response(rsp_txt, status=rsp_status, content_type="text/plain")
+                return Response(rsp, status=rsp_status, content_type="application/json")
 
         elif inputs["method"] == "DELETE":
             source = inputs['headers']["authorization"]
