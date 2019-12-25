@@ -12,6 +12,8 @@
 
             console.log("Hello!")
 
+            var g_first_name, g_last_name, g_cid, g_email;
+
             var version = "678";
 
             // This is also not a good way to do this anymore.
@@ -28,6 +30,7 @@
             if(id_token && id_token.length > 0){
                 //To do: Validate the authenticity of the JWT token
                 var id_token_obj = parseJwt(id_token)
+                sStorage.setItem("id_token", id_token);
                 console.log('userID='+id_token_obj['cognito:username'].toString())
                 console.log('email='+id_token_obj['email'].toString()) //get email from the ID token
                 console.log('email='+id_token_obj['given_name'].toString()) //get the given name from the ID token
@@ -35,10 +38,13 @@
                 console.log("Done setting everything");
             }
 
-            var customer_service_base_url = "http://127.0.0.1:5000/api"
+            // var customer_service_base_url = "http://127.0.0.1:5000/api"
             // var customer_service_base_url = "http://tse6156.xbpsufqtgm.us-east-1.elasticbeanstalk.com/api"
+            var customer_service_base_url = "https://rpdp3zsx2m.execute-api.us-east-1.amazonaws.com/live/api";
 
             return {
+                g_first_name,
+                g_last_name,
                 get_version: function () {
                     return ("1234");
                 },
@@ -60,8 +66,9 @@
                                 console.log("Data = " + JSON.stringify(result, null, 4));
                                 console.log("Headers = " + JSON.stringify(h, null, 4))
                                 console.log("RSP = " + JSON.stringify(rsp, null, 4))
-
-                                var auth = h.authorization;
+                                if ('authorization' in h){
+                                var auth = h.authorization;}
+                                else{var auth = h["x-amzn-remapped-authorization"]}
                                 sStorage.setItem("token", auth);
                                 resolve("OK")
                                 $('#loginModal').modal('hide');
@@ -82,20 +89,24 @@
                         var url = customer_service_base_url + "/user";
                         
                         var headers1;
+                        let id_token = sStorage.getItem("id_token");
                         if(id_token && id_token.length > 0)
                         {
+                            console.log("Firing for google/Fb login");
                             headers1 = {
                                 'Content-Type': 'application/json',
                                 'authorization': id_token };       
                         }
                         else{
+                            console.log("Firing for normal login");
                             headers1 = {
                                 'Content-Type': 'application/json',
-                                'authorization': sStorage.getItem("token") };
+                                'Authorization': sStorage.getItem("token") };
                         }
                         let options = { headers: headers1 };
 
                         console.log("Before checkLogin REST");
+                        console.log(options);
                         $http.post(url, null, options).success(
                             function (data, status, headers) {
                                 var rsp = data;
@@ -145,7 +156,9 @@
                                 console.log("Headers = " + JSON.stringify(h, null, 4))
                                 console.log("RSP = " + JSON.stringify(rsp, null, 4))
 
-                                var auth = h.authorization;
+                                if ('authorization' in h){
+                                    var auth = h.authorization;}
+                                else{var auth = h["x-amzn-remapped-authorization"]}
                                 sStorage.setItem("token", auth);
                                 resolve("OK")
                             }).error(function (error) {
@@ -178,17 +191,32 @@
                 doUpdatePersonal: function ($scope, data) {
                     console.log(data);
                     var email = $scope.lemail;
+                    console.log("Customer service js doUpdatePersonal");
+                    console.log($scope.customerInfo.first_name);
+                    console.log($scope.customerInfo.last_name);
+
                     return new Promise(function(resolve, reject) {
                         console.log("Updating personal details.")
                         var url = customer_service_base_url + "/user/" + email;
                         console.log("email = " + email);
                         console.log("data = " + data);
-                        // console.log("PW = " + pw);
-
-                        let headers1 = {
-                            'Content-Type': 'application/json',
-                            'authorization': sStorage.getItem("token"),
-                            'Etag': sStorage.getItem("personal_etag") };
+                        var headers1;
+                        let id_token = sStorage.getItem("id_token");
+                        if(id_token && id_token.length > 0)
+                        {
+                            console.log("Firing for google/Fb update personal");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'authorization': id_token,
+                                'Etag': sStorage.getItem("personal_etag") };       
+                        }
+                        else{
+                            console.log("Firing for normal update personal");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'Authorization': sStorage.getItem("token"), 
+                                'Etag': sStorage.getItem("personal_etag") };
+                        }
                         let options = { headers: headers1 };
 
                         var bd = data;
@@ -218,10 +246,23 @@
                         console.log("Updating profile details.")
                         var url = customer_service_base_url + "/profile/" + cId1;
 
-                        let headers1 = {
-                            'Content-Type': 'application/json',
-                            'authorization': sStorage.getItem("token"),
-                            'Etag': sStorage.getItem("profile_etag")};
+                        var headers1;
+                        let id_token = sStorage.getItem("id_token");
+                        if(id_token && id_token.length > 0)
+                        {
+                            console.log("Firing for google/Fb update profile");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'authorization': id_token,
+                                'Etag': sStorage.getItem("profile_etag") };       
+                        }
+                        else{
+                            console.log("Firing for normal update profile");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'Authorization': sStorage.getItem("token"),
+                                'Etag': sStorage.getItem("profile_etag") };
+                        }
                         let options = { headers: headers1 };
 
                         $http.put(url, data, options).success(
@@ -274,10 +315,23 @@
                     return new Promise(function(resolve, reject) {
                         console.log("Getting profile details.")
                         var url = customer_service_base_url + "/profile/" + cId;
-                        let headers1 = {
-                            'Content-Type': 'application/json',
-                            'authorization': sStorage.getItem("token"),
-                            'Etag':  sStorage.getItem("profile_etag") };
+                        var headers1;
+                        let id_token = sStorage.getItem("id_token");
+                        if(id_token && id_token.length > 0)
+                        {
+                            console.log("Firing for google/Fb get profile");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'authorization': id_token,
+                                'Etag':  sStorage.getItem("profile_etag") };       
+                        }
+                        else{
+                            console.log("Firing for normal get profile");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'Authorization': sStorage.getItem("token"),
+                                'Etag':  sStorage.getItem("profile_etag") };
+                        }
                         let options = { headers: headers1 };
 
                         $http.get(url, null, options).success(
@@ -294,6 +348,8 @@
                                 let data_list = rsp['response'];
                                 console.log("fegfg4rg4thy5h" + data_list);
                                 sStorage.setItem("profile_etag", rsp['headers']['Etag']);
+                                $scope.firstNameUpdate = $scope.customerInfo.first_name;
+                                $scope.lastNameUpdate = $scope.customerInfo.last_name;
                                 for(var i = 0; i < data_list.length; i++) {
                                     console.log(i);
                                     console.log(data_list[i]);
