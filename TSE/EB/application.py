@@ -358,9 +358,16 @@ def check_user_login():
             if "Authorization" in inputs["headers"] and inputs["headers"]["Authorization"] != "null":
                 email = decode_token(inputs["headers"]["Authorization"])
 
+                print('\nObject obtained in check_user_login\n')
+                print(email)
+
                 rsp = user_service.get_by_email(email["source"])
+                print('\nRsp valu\n')
+                print(rsp)
+                print(type(rsp))
+
                 if rsp is None:
-                    if "email" in email:
+                    if "source" in email:
                         if "given_name" in email: # FB/Google login
                             # push to DB
                             data = {}
@@ -829,6 +836,15 @@ def user_profile(customer_id):
         if rsp_1 is None:
             return Response("Resource not found", status=404, content_type="text/plain")
         print(rsp_1)
+
+        tags_present = []
+
+        for elem in rsp_1:
+            tags_present.append([elem['subtype'], elem['type']])
+
+        print('\nTags present\n')
+        print(tags_present)
+
         # rsp_2 = OrderedDict(rsp_1)
         # print(rsp_2)
         ###### here
@@ -851,10 +867,14 @@ def user_profile(customer_id):
             }
 
         elif inputs["method"] == "PUT":
+            print('\nHere inside PUT inside update profile\n')
             print(inputs)
             source = inputs['headers']['Authorization']
             # print(source)
             user_profile_email = user_service.get_resource_by_primary_key(customer_id)["email"]
+
+            print('\nUser profile email\n')
+            print(user_profile_email)
             if not is_user_authorized_to_put(source, user_profile_email):
                 rsp_status = 403
                 rsp_txt = "Forbidden. Not authorized"
@@ -869,6 +889,8 @@ def user_profile(customer_id):
                 # Implemented address verification
                 data = inputs['body']
                 # parse the data and process it here
+                print('\nInputs to Update profile\n')
+                print(data)
 
                 rsp_txt = ""
                 for key in data.keys():
@@ -882,18 +904,45 @@ def user_profile(customer_id):
                             if address_check['body']['status'] == 'success':
                                 req_data = {}
                                 req_data['value'] = address_check['body']['barcode']
-                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Address')                           
+
+                                if ['Home','Address'] in tags_present:
+                                    rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Address') 
+                                else:
+                                    req_data = {}
+                                    req_data['user_id'] = customer_id
+                                    req_data['type'] = 'Address'
+                                    req_data['subtype'] = 'Home'
+                                    # req_data['value'] = data['Home']['Address']
+                                    rsp = profile_service.create_profile(req_data)                  
                             else:
                                 rsp_txt += "Kindly enter a valid value for Home address! "
                                 continue
                         if 'Phone' in data['Home']:
                             req_data = {}
                             req_data['value'] = data['Home']['Phone']
-                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Telephone')       
+
+                            if ['Home','Telephone'] in tags_present:
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Telephone') 
+                            else:
+                                req_data = {}
+                                req_data['user_id'] = customer_id
+                                req_data['type'] = 'Telephone'
+                                req_data['subtype'] = 'Home'
+                                req_data['value'] = data['Home']['Phone']
+                                rsp = profile_service.create_profile(req_data)
                         if 'Email' in data['Home']:
                             req_data = {}
                             req_data['value'] = data['Home']['Email']
-                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Email')  
+
+                            if ['Home','Email'] in tags_present:
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Home', 'Email') 
+                            else: 
+                                req_data = {}
+                                req_data['user_id'] = customer_id
+                                req_data['type'] = 'Email'
+                                req_data['subtype'] = 'Home'
+                                req_data['value'] = data['Home']['Email']
+                                rsp = profile_service.create_profile(req_data)
 
                     elif key == 'Office':
                         if 'Address' in data['Office']:
@@ -904,18 +953,46 @@ def user_profile(customer_id):
                             if address_check['body']['status'] == 'success':
                                 req_data = {}
                                 req_data['value'] = address_check['body']['barcode']
-                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Address')                           
+
+                                if ['Work','Address'] in tags_present:
+                                    rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Address')
+                                else:
+                                    req_data = {}
+                                    req_data['user_id'] = customer_id
+                                    req_data['type'] = 'Address'
+                                    req_data['subtype'] = 'Work'
+                                    # req_data['value'] = data['Office']['Address']
+                                    rsp = profile_service.create_profile(req_data)
                             else:
                                 rsp_txt += "Kindly enter a valid value for Work address! "
                                 continue
                         if 'Phone' in data['Office']:
                             req_data = {}
                             req_data['value'] = data['Office']['Phone']
-                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Telephone')       
+
+                            if ['Work','Telephone'] in tags_present:
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Telephone') 
+                            else:
+                                req_data = {}
+                                req_data['user_id'] = customer_id
+                                req_data['type'] ='Telephone'
+                                req_data['subtype'] = 'Work'
+                                req_data['value'] = data['Office']['Phone']
+                                rsp = profile_service.create_profile(req_data)
+
                         if 'Email' in data['Office']:
                             req_data = {}
                             req_data['value'] = data['Office']['Email']
-                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Email')  
+
+                            if ['Work','Email'] in tags_present:
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Work', 'Email') 
+                            else:
+                                req_data = {}
+                                req_data['user_id'] = customer_id
+                                req_data['type'] ='Email'
+                                req_data['subtype'] = 'Work'
+                                req_data['value'] = data['Office']['Email']
+                                rsp = profile_service.create_profile(req_data)
 
                     elif key == 'Other':
                         if 'Address' in data['Other']:
@@ -926,18 +1003,45 @@ def user_profile(customer_id):
                             if address_check['body']['status'] == 'success':
                                 req_data = {}
                                 req_data['value'] = address_check['body']['barcode']
-                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Address')                           
+
+                                if ['Other','Address'] in tags_present:
+                                    rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Address') 
+                                else:
+                                    req_data = {}
+                                    req_data['user_id'] = customer_id
+                                    req_data['type'] ='Address'
+                                    req_data['subtype'] = 'Other'
+                                    # req_data['value'] = data['Other']['Address']
+                                    rsp = profile_service.create_profile(req_data)
                             else:
                                 rsp_txt += "Kindly enter a valid value for Other address! "
                                 continue
                         if 'Phone' in data['Other']:
                             req_data = {}
                             req_data['value'] = data['Other']['Phone']
-                            rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Telephone')       
+
+                            if ['Other','Phone'] in tags_present:
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Telephone')
+                            else:
+                                req_data = {}
+                                req_data['user_id'] = customer_id
+                                req_data['type'] ='Telephone'
+                                req_data['subtype'] = 'Other'
+                                req_data['value'] = data['Other']['Phone']
+                                rsp = profile_service.create_profile(req_data)    
                         if 'Email' in data['Other']:
                             req_data = {}
                             req_data['value'] = data['Other']['Email']
-                            rsp = profile_service.update_profile(req_data. data['user_id'], 'Other', 'Email')
+
+                            if ['Other','Email'] in tags_present:
+                                rsp = profile_service.update_profile(req_data, data['user_id'], 'Other', 'Email')
+                            else:
+                                req_data = {}
+                                req_data['user_id'] = customer_id
+                                req_data['type'] ='Email'
+                                req_data['subtype'] = 'Other'
+                                req_data['value'] = data['Other']['Email']
+                                rsp = profile_service.create_profile(req_data)
 
                 # if rsp is not None:
                 #     rsp['headers'] = {

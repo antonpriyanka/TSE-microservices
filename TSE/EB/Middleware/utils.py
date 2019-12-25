@@ -8,22 +8,30 @@ def create_authorization_token(email):
     return jwt.encode({'source':email}, 'verify-user-234234', algorithm='HS256').decode('utf-8')
 
 def decode_token(encoded):
+	print('\nBefore parsing encoded\n')
 	obj = parse_id_token(encoded)
+	print('\nAfter parsing encoded\n')
 	if 'given_name' in obj:
 		if 'email' in obj:
+			print('\ngiven_name and email\n')
 			email = obj['email']
 		else:
+			print('\ngiven_name and no email\n')
 			email = obj['source']
 
 		if 'given_name' in obj:
+			print('\ngiven_name\n')
 			given_name = obj['given_name']
 		dict = {}
-		if email.find(".com") != -1:
-		    dict["source"] = email
-		    dict["given_name"] = given_name
-		    return dict
+		if '@' in email:
+			print('\nProcess email\n')
+			dict["source"] = email
+			dict["given_name"] = given_name
+			print(dict)
+			return dict
 	else:
-	    return jwt.decode(encoded, 'verify-user-234234', algorithm='HS256')
+		print('No given_name')
+		return jwt.decode(encoded, 'verify-user-234234', algorithm='HS256')
 
 
 def parse_id_token(token: str):
