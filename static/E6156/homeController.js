@@ -29,8 +29,9 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
     console.log("Port = " + $location.port());
     console.log("Protocol = " + $location.protocol());
 
-    baseUrl = "http://127.0.0.1:5000/api";
+    //baseUrl = "http://127.0.0.1:5000/api";
     // baseUrl = "http://tse6156.xbpsufqtgm.us-east-1.elasticbeanstalk.com/api";
+    var baseUrl = "https://rpdp3zsx2m.execute-api.us-east-1.amazonaws.com/live/api";
 
     console.log("CustomerService version = " + CustomerService.get_version());
 
@@ -181,8 +182,10 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
     };
 
 
-    var urlBase = "http://127.0.0.1:5000"
+    //var urlBase = "http://127.0.0.1:5000"
     // var urlBase = "http://tse6156.xbpsufqtgm.us-east-1.elasticbeanstalk.com"
+    var urlBase = "https://rpdp3zsx2m.execute-api.us-east-1.amazonaws.com/live/";
+    
 
 
 

@@ -6,7 +6,7 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
 
     var s3 = jQuery.LiveAddress({
         // key: "18981749384552786",
-        key: "10836073891956756",
+        key: "10836073982628376",
         waitForStreet: true,
         debug: true,
         target: "US",
