@@ -160,6 +160,8 @@
                                     var auth = h.authorization;}
                                 else{var auth = h["x-amzn-remapped-authorization"]}
                                 sStorage.setItem("token", auth);
+                                $('#loginModal').modal('hide');
+                                alert("Please verify yourself. You must have recieved an email!");
                                 resolve("OK")
                             }).error(function (error) {
                                 var error_msg = JSON.stringify(error);
@@ -309,9 +311,57 @@
                     
                 },
 
-                getProfileData: function($scope, cId) {
+                checkProfileData: function($scope, cId) {
                     console.log('fegfrg' + $scope);
                     // let cId = "B5E18BC4-5339-47C5-FBB1-AC9B59251DB7";
+                    return new Promise(function(resolve, reject) {
+                        console.log("Getting profile details.")
+                        var url = customer_service_base_url + "/profile/" + cId;
+                        var headers1;
+                        let id_token = sStorage.getItem("id_token");
+                        if(id_token && id_token.length > 0)
+                        {
+                            console.log("Firing for google/Fb get profile");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'authorization': id_token,
+                                'Etag':  sStorage.getItem("profile_etag") };       
+                        }
+                        else{
+                            console.log("Firing for normal get profile");
+                            headers1 = {
+                                'Content-Type': 'application/json',
+                                'Authorization': sStorage.getItem("token"),
+                                'Etag':  sStorage.getItem("profile_etag") };
+                        }
+                        let options = { headers: headers1 };
+
+                        $http.get(url, null, options).success(
+                            function (data, status, headers) {
+                                console.log("all good to go! profile exists");
+                                resolve("OK");//resolving
+                            }).error(function (error) {
+                                var error_msg = JSON.stringify(error);
+                                console.log("Error in check profile data = " + error_msg);
+                                // alert(error_msg);
+                                // reject(error_msg)
+                                reject(404);//rejecting, to create a case for the doupdateprofile.
+                            });
+                    });
+                },
+
+                getPersonalData: function($scope, cId) {
+                    return new Promise(function(resolve, reject) {
+                        $scope.firstNameUpdate = $scope.customerInfo.first_name;
+                        $scope.lastNameUpdate = $scope.customerInfo.last_name;
+                        console.log("updated the personal detials from getPersonalData");
+
+                    });
+                },
+
+                getProfileData: function($scope, cId) {
+                    console.log('fegfrg' + $scope);
+                    // let cId = "B5E18BC4-5339-47C5-FBB1-AC9B59251DB7"; //we have a firstname and a last name if he has a customerID
                     return new Promise(function(resolve, reject) {
                         console.log("Getting profile details.")
                         var url = customer_service_base_url + "/profile/" + cId;
@@ -356,24 +406,106 @@
                                     if(data_list[i]['subtype'] == 'Home') {
                                         if(data_list[i]['type'] == 'Telephone') $scope.homePhoneUpdate = data_list[i]['value'];
                                         if(data_list[i]['type'] == 'Email') $scope.homeEmailUpdate = data_list[i]['value'];
-                                        if(data_list[i]['type'] == 'Address') $scope.homeAddressUpdate = data_list[i]['value'];
+                                        if(data_list[i]['type'] == 'Address') {
+
+                                            let home_barcode = data_list[i]['value']; // barcode from the backend
+                                            //call the url to get the address
+                                            let add_url = "https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address?barcode="+home_barcode;
+                                            let opt = { headers: {'Content-Type': 'application/json'} };
+                                            $http.get(add_url, null, opt).success(
+                                                        function (data, status, headers) {
+                                                            console.log("printing the data");
+                                                            console.log(data);
+                                                            console.log("printing the data[response]");
+                                                            console.log(data['response']);
+                                                            if(data['status']=="success")
+                                                            {
+                                                                $scope.homeAddressUpdate = data['id']['Item']['address']['street'];
+                                                                console.log("fetched and updated the home address");
+                                                            }
+                                                            else
+                                                                $scope.homeAddressUpdate = home_barcode;
+
+                                                        }).error(function (error) {
+                                                            var error_msg = JSON.stringify(error);
+                                                            console.log("Error = " + error_msg);
+                                                            // alert(error_msg);
+                                                            // reject(error_msg)
+                                                            reject(404);
+                                                        });
+
+                                        }
                                     }
                                     if(data_list[i]['subtype'] == 'Work') {
                                         if(data_list[i]['type'] == 'Telephone') $scope.officePhoneUpdate = data_list[i]['value'];
                                         if(data_list[i]['type'] == 'Email') $scope.officeEmailUpdate = data_list[i]['value'];
-                                        if(data_list[i]['type'] == 'Address') $scope.officeAddressUpdate = data_list[i]['value'];
+                                        if(data_list[i]['type'] == 'Address') {
+
+                                            let office_barcode = data_list[i]['value']; // barcode from the backend
+                                            //call the url to get the address
+                                            let add_url = "https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address?barcode="+office_barcode;
+                                            let opt = { headers: {'Content-Type': 'application/json'} };
+                                            $http.get(add_url, null, opt).success(
+                                                        function (data, status, headers) {
+                                                            console.log("printing the data");
+                                                            console.log(data);
+                                                            console.log("printing the data[response]");
+                                                            console.log(data['response']);
+                                                            if(data['status']=="success")
+                                                            {
+                                                                $scope.officeAddressUpdate = data['id']['Item']['address']['street'];
+                                                                console.log("fetched and updated the office address");
+                                                            }
+                                                            else
+                                                                $scope.officeAddressUpdate = office_barcode;
+
+                                                        }).error(function (error) {
+                                                            var error_msg = JSON.stringify(error);
+                                                            console.log("Error = " + error_msg);
+                                                            // alert(error_msg);
+                                                            // reject(error_msg)
+                                                            reject(404);
+                                                        });
+                                        }
                                     }
                                     if(data_list[i]['subtype'] == 'Other') {
                                         if(data_list[i]['type'] == 'Telephone') $scope.otherPhoneUpdate = data_list[i]['value'];
                                         if(data_list[i]['type'] == 'Email') $scope.otherEmailUpdate = data_list[i]['value'];
-                                        if(data_list[i]['type'] == 'Address') $scope.otherAddressUpdate = data_list[i]['value'];
+                                        if(data_list[i]['type'] == 'Address') {
+
+                                            let other_barcode = data_list[i]['value']; // barcode from the backend
+                                            //call the url to get the address
+                                            let add_url = "https://5rdtqihsge.execute-api.us-east-1.amazonaws.com/Alpha/eb/address?barcode="+other_barcode;
+                                            let opt = { headers: {'Content-Type': 'application/json'} };
+                                            $http.get(add_url, null, opt).success(
+                                                        function (data, status, headers) {
+                                                            console.log("printing the data");
+                                                            console.log(data);
+                                                            console.log("printing the data[response]");
+                                                            console.log(data['response']);
+                                                            if(data['status']=="success")
+                                                            {
+                                                                $scope.otherAddressUpdate = data['id']['Item']['address']['street'];
+                                                                console.log("fetched and updated the other address");
+                                                            }
+                                                            else
+                                                                $scope.otherAddressUpdate = other_barcode;
+
+                                                        }).error(function (error) {
+                                                            var error_msg = JSON.stringify(error);
+                                                            console.log("Error = " + error_msg);
+                                                            // alert(error_msg);
+                                                            // reject(error_msg)
+                                                            reject(404);
+                                                        });
+                                        }
                                     }
                                 }
                                 // $scope.$apply();
                                 resolve("OK")
                             }).error(function (error) {
                                 var error_msg = JSON.stringify(error);
-                                console.log("Error = " + error_msg);
+                                console.log("Error from get profile data = " + error_msg);
                                 // alert(error_msg);
                                 // reject(error_msg)
                                 reject(404);

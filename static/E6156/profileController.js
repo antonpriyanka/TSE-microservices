@@ -6,7 +6,7 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
 
     var s3 = jQuery.LiveAddress({
         // key: "18981749384552786",
-        key: "10836073982628376",
+        key: "30557965407706460",
         waitForStreet: true,
         debug: true,
         target: "US",
@@ -69,6 +69,17 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
         CustomerService.checkLogin($scope).then(function() {
             CustomerService.getCustomer($scope.lemail).then(function() {
                 let cId = sStorage.getItem("cust_id");
+
+                //get customerdetials/data
+                CustomerService.getPersonalData($scope, cId).then(function (result) {
+                    console.log(result);
+                    console.log("updated the personal data");
+                }).
+                catch(function(error) {
+                    console.log("Error in getting personal data");
+                    console.log(error);
+                });
+                //get profiledata
                 CustomerService.getProfileData($scope, cId).then(function (result) {
                     console.log(result);
                 }).
@@ -76,6 +87,8 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
                     console.log("Error in getting profile data");
                     console.log(error);
                 });
+                //Done updating both personal and profile data
+
             }).        
             catch(function(error) {
                 console.log("Error in getting customer data");
@@ -136,11 +149,12 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
 
         data['user_id'] = sStorage.getItem("cust_id");
         // make a get call with cust it to see if user exists
-        CustomerService.getProfileData($scope, data['user_id']).then(function (result) {
+        CustomerService.checkProfileData($scope, data['user_id']).then(function (result) {
             console.log(result);
             // sStorage.setItem("profile_etag", result['headers']['Etag']);
             CustomerService.doUpdateProfile($scope, data, data['user_id']).then(function (result) {
-                console.log("profileController.js doUpdateProfile");
+                console.log("profileController.js - preform doUpdateProfile");
+                console.log("updating the new detials....updated");
             }).
             catch(function(error) {
                 console.log("Error");
@@ -148,9 +162,12 @@ CustomerApp.controller("profileController", function($scope, $http, $location, $
             })   
         }).
         catch(function(error) {
+            console.log("error=");
+            console.log(error);
             if(error == 404) {
+                console.log("creating a new profile for the user!");
                 CustomerService.doCreateProfile(data).then(function (result) {
-                    console.log("profileController.js doCreateProfile");
+                    console.log("profileController.js - preform doCreateProfile");
                 }).
                 catch(function(error) {
                     console.log("Error");

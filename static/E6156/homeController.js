@@ -135,15 +135,15 @@ CustomerApp.controller("homeController", function($scope, $http, $location, $win
                 $scope.lemail, $scope.password, $scope.password2, $scope.firstName, $scope.lastName
             ).then(function (result) {
                 console.log("Resolved!")
-                $scope.loginRegisterResult = true;
-                CustomerService.getCustomer($scope.lemail)
-                    .then(function(c) {
-                        $scope.customerInfo = c;
-                        $scope.$apply();
-                    })
-                    .catch(function(error) {
-                        console.log("Boom!")
-                    });
+                // $scope.loginRegisterResult = true;
+                // CustomerService.getCustomer($scope.lemail)
+                //     .then(function(c) {
+                //         $scope.customerInfo = c;
+                //         $scope.$apply();
+                //     })
+                //     .catch(function(error) {
+                //         console.log("Boom!")
+                //     });
             }).
                 catch(function(error) {
                 console.log("Error");
