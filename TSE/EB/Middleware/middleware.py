@@ -22,12 +22,12 @@ class SimpleMiddleWare(object):
         print("\n\nSimpleMiddlewareObject: something you want done in every http request")
         print (environ)
 
-        if '/api/verifyuser/' in environ['REQUEST_URI'] and environ['REQUEST_METHOD'] == 'PUT':
-            source = environ['HTTP_AUTHORIZATION']
-            if not is_user_authorized(source):
-                full_rsp = Response(json.dumps({'message': 'Not Authorized from Middleware'}), status=403,
-                                    content_type="application/json")
-                return full_rsp(environ, start_response)
+        # if '/api/verifyuser/' in environ['REQUEST_URI'] and environ['REQUEST_METHOD'] == 'PUT':
+        #     source = environ['HTTP_AUTHORIZATION']
+        #     if not is_user_authorized(source):
+        #         full_rsp = Response(json.dumps({'message': 'Not Authorized from Middleware'}), status=403,
+        #                             content_type="application/json")
+        #         return full_rsp(environ, start_response)
 
         if '/api/user/' in environ['REQUEST_URI'] and environ['REQUEST_METHOD'] == 'PUT':
             source = environ['HTTP_AUTHORIZATION']

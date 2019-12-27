@@ -196,6 +196,7 @@ def register():
 
     try:
         data = inputs["body"]
+        data['status'] = "PENDING" #trying out
         user_service = _get_user_service()
         if user_service.get_by_email(data["email"]):
             user_already_exists = True
